@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 提示詞資料庫</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <span class="logo-mark">◈</span>
+      <div class="logo-text">
+        <h1>AI 提示詞資料庫</h1>
+        <p class="logo-sub">Prompt Library · 52 modules</p>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" class="search-input" placeholder="搜尋提示詞名稱或內容…">
+      <span class="search-icon">⌕</span>
+    </div>
+  </div>
+</header>
+
+<nav class="cat-nav" id="catNav">
+  <button class="cat-btn active" data-cat="all">
+    <span class="cat-icon">◉</span> 全部
+    <span class="cat-count" id="count-all">52</span>
+  </button>
+  <button class="cat-btn" data-cat="preset">
+    <span class="cat-icon">◆</span> 個人化預設
+    <span class="cat-count">2</span>
+  </button>
+  <button class="cat-btn" data-cat="decision">
+    <span class="cat-icon">⬡</span> 決策與分析
+    <span class="cat-count">7</span>
+  </button>
+  <button class="cat-btn" data-cat="proposal">
+    <span class="cat-icon">⬢</span> 企劃與提案
+    <span class="cat-count">4</span>
+  </button>
+  <button class="cat-btn" data-cat="comms">
+    <span class="cat-icon">◎</span> 職場溝通與文書
+    <span class="cat-count">4</span>
+  </button>
+  <button class="cat-btn" data-cat="writing">
+    <span class="cat-icon">◫</span> 文稿品質提升
+    <span class="cat-count">2</span>
+  </button>
+  <button class="cat-btn" data-cat="ai-roles">
+    <span class="cat-icon">◈</span> 策略智囊角色
+    <span class="cat-count">6</span>
+  </button>
+  <button class="cat-btn" data-cat="routine">
+    <span class="cat-icon">📅</span> 職場例行排程
+    <span class="cat-count">2</span>
+  </button>
+  <button class="cat-btn" data-cat="research">
+    <span class="cat-icon">🔬</span> 研究分析精進
+    <span class="cat-count">14</span>
+  </button>
+  <button class="cat-btn" data-cat="coach">
+    <span class="cat-icon">🔥</span> 職場應援教練
+    <span class="cat-count">3</span>
+  </button>
+  <button class="cat-btn" data-cat="life">
+    <span class="cat-icon">◌</span> 生活娛樂應用
+    <span class="cat-count">2</span>
+  </button>
+  <button class="cat-btn" data-cat="tools">
+    <span class="cat-icon">◇</span> 寫作創作工具
+    <span class="cat-count">8</span>
+  </button>
+</nav>
+
+<main class="main-grid" id="cardGrid"></main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-meta">
+        <span class="modal-cat-tag" id="modalCat"></span>
+        <h2 class="modal-title" id="modalTitle"></h2>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <pre class="modal-content" id="modalContent"></pre>
+    </div>
+    <div class="modal-cases" id="modalCases" style="display:none;">
+      <div class="modal-cases-title">📋 實戰案例 · 點擊複製可直接使用</div>
+      <div id="modalCasesList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="copy-btn" id="copyBtn">
+        <span class="copy-icon">⎘</span> 複製提示詞
+      </button>
+      <span class="copy-confirm" id="copyConfirm"></span>
+      <span class="modal-copy-count" id="modalCopyCount"></span>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="cases.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
