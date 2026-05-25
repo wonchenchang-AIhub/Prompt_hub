@@ -288,6 +288,12 @@ body {
 .modal-case-prompt { font-family: var(--font-mono); font-size: 11px; color: var(--text); line-height: 1.7; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; }
 
 /* ── Responsive ──────────────────────────────────────────────── */
+
+.cat-industry { --cat-color:#0284c7; --cat-bg:#f0f9ff; --cat-border:#bae6fd; --card-accent:#0284c7; }
+.cat-sales    { --cat-color:#15803d; --cat-bg:#f0fdf4; --cat-border:#bbf7d0; --card-accent:#15803d; }
+.cat-learning { --cat-color:#be123c; --cat-bg:#fff1f2; --cat-border:#fecdd3; --card-accent:#be123c; }
+.cat-creative { --cat-color:#6d28d9; --cat-bg:#f5f3ff; --cat-border:#ddd6fe; --card-accent:#6d28d9; }
+
 @media (max-width: 768px) {
   .site-header { padding: 0 16px; }
   .cat-nav { padding: 0 16px; }
