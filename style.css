@@ -1,3 +1,83 @@
+
+/* ── Hero Title Block ──────────────────────────────────────── */
+.site-header {
+  background: #111827;
+  border-bottom: none;
+  padding: 0;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+.hero-block {
+  max-width: 1400px; margin: 0 auto;
+  padding: 40px 32px 28px;
+}
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 14px;
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 700;
+  color: #f9fafb;
+  line-height: 1.15;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+.hero-accent {
+  color: #818cf8;
+}
+.hero-tagline .hero-accent {
+  color: #818cf8;
+}
+.hero-tagline {
+  font-size: 14px;
+  color: #d1d5db;
+  margin-bottom: 6px;
+  font-weight: 400;
+}
+.hero-quote {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  font-style: italic;
+}
+.hero-block .search-wrap {
+  max-width: 560px;
+}
+.hero-block .search-input {
+  background: #1f2937;
+  border: 1.5px solid #374151;
+  color: #f9fafb;
+  font-size: 14px;
+  padding: 10px 16px 10px 44px;
+}
+.hero-block .search-input::placeholder { color: #6b7280; }
+.hero-block .search-input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129,140,248,0.15);
+}
+.hero-block .search-icon {
+  color: #6b7280;
+}
+/* Cat nav 配合深色 hero */
+.cat-nav {
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+  box-shadow: none;
+  top: 0;
+  position: relative;
+}
+.cat-btn { color: #9ca3af; }
+.cat-btn:hover { color: #e5e7eb; }
+.cat-btn.active { color: #818cf8; border-bottom-color: #818cf8; }
+.cat-btn.active .cat-count { background: rgba(129,140,248,0.15); border-color: rgba(129,140,248,0.3); color: #818cf8; }
+
 /* ── Root Variables ──────────────────────────────────────────── */
 :root {
   --bg:           #f0f2f7;
@@ -60,14 +140,7 @@ body {
 }
 
 /* ── Header ──────────────────────────────────────────────────── */
-.site-header {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(240,242,247,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 32px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
+
 .header-inner {
   max-width: 1400px; margin: 0 auto;
   height: 68px; display: flex; align-items: center; gap: 24px;
