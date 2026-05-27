@@ -316,7 +316,6 @@ body {
 .modal-cat-tag.cat-routine  { background:#f0fdfa; color:#0f766e; border:1px solid #99f6e4; }
 .modal-cat-tag.cat-research { background:#faf5ff; color:#7e22ce; border:1px solid #d8b4fe; }
 .modal-cat-tag.cat-tools    { background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; }
-.modal-cat-tag.cat-presentation { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
 .modal-title { font-family: var(--font-serif); font-size: 19px; font-weight: 600; line-height: 1.4; color: var(--text); }
 .modal-close {
   background: var(--surface-3); border: 1.5px solid var(--border); border-radius: 8px;
@@ -366,8 +365,7 @@ body {
 .cat-industry { --cat-color:#0284c7; --cat-bg:#f0f9ff; --cat-border:#bae6fd; --card-accent:#0284c7; }
 .cat-sales    { --cat-color:#15803d; --cat-bg:#f0fdf4; --cat-border:#bbf7d0; --card-accent:#15803d; }
 .cat-learning { --cat-color:#be123c; --cat-bg:#fff1f2; --cat-border:#fecdd3; --card-accent:#be123c; }
-.cat-creative     { --cat-color:#6d28d9; --cat-bg:#f5f3ff; --cat-border:#ddd6fe; --card-accent:#6d28d9; }
-.cat-presentation { --cat-color:#c2410c; --cat-bg:#fff7ed; --cat-border:#fed7aa; --card-accent:#c2410c; }
+.cat-creative { --cat-color:#6d28d9; --cat-bg:#f5f3ff; --cat-border:#ddd6fe; --card-accent:#6d28d9; }
 
 @media (max-width: 768px) {
   .site-header { padding: 0 16px; }
