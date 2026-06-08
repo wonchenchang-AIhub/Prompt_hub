@@ -97,13 +97,6 @@ window.addEventListener('DOMContentLoaded', function() {
   syncFromGist();
 });
 
-function getCount(id) { return loadCounts()[id] || 0; }
-function incrementCount(id) {
-  const c = loadCounts();
-  c[id] = (c[id] || 0) + 1;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
-  return c[id];
-}
 function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
