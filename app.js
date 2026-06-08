@@ -22,12 +22,81 @@ function getCasePrompt(idx) {
   return window.__caseCache[idx] || '';
 }
 
-/* ── Copy-count persistence ─────────────────────────────────────────────── */
-const STORAGE_KEY = 'prompt_copy_counts';
-function loadCounts() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-  catch { return {}; }
+/* ── Copy-count persistence (GitHub Gist + localStorage fallback) ───────── */
+var _GH_TOKEN   = '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';
+var _GIST_ID    = '9b698905014cc381f348a36b95e9aab2';
+var _GIST_URL   = 'https://api.github.com/gists/' + _GIST_ID;
+var _LS_KEY     = 'prompt_copy_counts';
+var _memCounts  = null;
+var _pushTimer  = null;
+
+function _lsLoad() {
+  try { return JSON.parse(localStorage.getItem(_LS_KEY) || '{}'); } catch(e) { return {}; }
 }
+function _lsSave(c) {
+  try { localStorage.setItem(_LS_KEY, JSON.stringify(c)); } catch(e) {}
+}
+
+function getCount(id) {
+  return (_memCounts || _lsLoad())[id] || 0;
+}
+
+// 從 Gist 拉最新數據，合併後更新本地
+function syncFromGist() {
+  fetch(_GIST_URL, {
+    headers: {
+      'Authorization': 'token ' + _GH_TOKEN,
+      'Accept': 'application/vnd.github+json'
+    }
+  })
+  .then(function(r) { return r.ok ? r.json() : null; })
+  .then(function(data) {
+    if (!data) return;
+    var remote = {};
+    try { remote = JSON.parse(data.files['counts.json'].content).counts || {}; } catch(e) {}
+    var local  = _lsLoad();
+    var merged = Object.assign({}, local);
+    Object.keys(remote).forEach(function(k) {
+      merged[k] = Math.max(parseInt(merged[k]) || 0, parseInt(remote[k]) || 0);
+    });
+    _memCounts = merged;
+    _lsSave(merged);
+    refreshAllCountPills();
+  })
+  .catch(function() { _memCounts = _lsLoad(); });
+}
+
+// 防抖推送：500ms 內多次複製只推一次
+function pushToGist() {
+  clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(function() {
+    var payload = JSON.stringify({ counts: _memCounts || _lsLoad() });
+    fetch(_GIST_URL, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'token ' + _GH_TOKEN,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ files: { 'counts.json': { content: payload } } })
+    }).catch(function() {});
+  }, 500);
+}
+
+function incrementCount(id) {
+  var c = _memCounts || _lsLoad();
+  c[id] = (c[id] || 0) + 1;
+  _memCounts = c;
+  _lsSave(c);
+  pushToGist();
+  return c[id];
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  _memCounts = _lsLoad();
+  syncFromGist();
+});
+
 function getCount(id) { return loadCounts()[id] || 0; }
 function incrementCount(id) {
   const c = loadCounts();
