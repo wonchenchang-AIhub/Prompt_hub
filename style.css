@@ -37,8 +37,8 @@
 /* 兩欄容器 */
 .hero-body {
   display: flex;
-  align-items: center;
-  gap: 32px;
+  align-items: flex-start;
+  gap: 24px;
 }
 .hero-left {
   flex: 0 0 auto;
@@ -46,6 +46,7 @@
 .hero-right {
   flex: 1;
   min-width: 0;
+  padding-top: 20px;
 }
 
 /* 主標題 */
@@ -120,13 +121,20 @@
 
 /* Cat nav 配合碳黑 */
 .cat-nav {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
   background: #080b0f;
   border-bottom: 1px solid rgba(0,212,170,0.1);
   box-shadow: none;
   top: 0;
   position: relative;
 }
-.cat-btn { color: #2d5050; }
+.cat-btn {
+  white-space: nowrap;
+  flex-shrink: 0; color: #2d5050; }
 .cat-btn:hover { color: #a0c8c0; }
 .cat-btn.active { color: #00d4aa; border-bottom-color: #00d4aa; }
 .cat-btn.active .cat-count {
