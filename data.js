@@ -1,18 +1,18 @@
 
 const CATEGORIES = {
-  preset:   { label: '⚙️ AI工具設定',  icon: '⚙️', class: 'cat-preset'   },
-  decision: { label: '📊 決策與分析',   icon: '📊', class: 'cat-decision' },
-  proposal: { label: '📋 企劃與提案',   icon: '📋', class: 'cat-proposal' },
-  comms:    { label: '💼 職場溝通',     icon: '💼', class: 'cat-comms'    },
-  writing:  { label: '✍️ 文稿優化',    icon: '✍️', class: 'cat-writing'  },
-  ai_roles: { label: '🧠 策略智囊',    icon: '🧠', class: 'cat-ai-roles' },
-  industry: { label: '📈 產業分析',    icon: '📈', class: 'cat-industry' },
-  sales:    { label: '💰 銷售業務',    icon: '💰', class: 'cat-sales'    },
-  research: { label: '🔬 研究分析',    icon: '🔬', class: 'cat-research' },
-  routine:  { label: '📅 日常效率',    icon: '📅', class: 'cat-routine'  },
-  learning: { label: '🎓 學習成長',    icon: '🎓', class: 'cat-learning' },
-  creative: { label: '🎨 視覺創作',    icon: '🎨', class: 'cat-creative' },
-  life:     { label: '✨ 生活娛樂',    icon: '✨', class: 'cat-life'     },
+  preset:   { label: 'AI工具設定',  icon: '⚙️', class: 'cat-preset'   },
+  decision: { label: '決策與分析',   icon: '📊', class: 'cat-decision' },
+  proposal: { label: '企劃與提案',   icon: '📋', class: 'cat-proposal' },
+  comms:    { label: '職場溝通',     icon: '💼', class: 'cat-comms'    },
+  writing:  { label: '文稿優化',    icon: '✍️', class: 'cat-writing'  },
+  ai_roles: { label: '策略智囊',    icon: '🧠', class: 'cat-ai-roles' },
+  industry: { label: '產業分析',    icon: '📈', class: 'cat-industry' },
+  sales:    { label: '銷售業務',    icon: '💰', class: 'cat-sales'    },
+  research: { label: '研究分析',    icon: '🔬', class: 'cat-research' },
+  routine:  { label: '日常效率',    icon: '📅', class: 'cat-routine'  },
+  learning: { label: '學習成長',    icon: '🎓', class: 'cat-learning' },
+  creative: { label: '視覺創作',    icon: '🎨', class: 'cat-creative' },
+  life:     { label: '生活娛樂',    icon: '✨', class: 'cat-life'     },
 };
 
 const PROMPTS = [
@@ -1905,6 +1905,67 @@ Step3 給一個清楚的出口，讓他自己決定
     cat: 'decision',
     title: 'AI 工具導入評估',
     content: "你是一位企業數位化顧問，專精於中小企業 AI 工具的導入評估與成本效益分析。\n\n請針對以下業務場景，協助我評估是否適合導入 AI 工具，並提供具體建議：\n\n【業務場景描述】：【請描述目前的工作流程與痛點，例如：報價流程、客服回覆、日報撰寫等】\n\n【現況資料（請盡量填入）】\n目前執行此工作的人數：【請填入】人\n每次處理所需時間：約【請填入】分鐘\n每週執行頻率：約【請填入】次\n目前的主要困擾：【請填入，如：費時、品質不穩定、人員流動導致斷層】\n公司規模：約【請填入】人\n月度預算（可接受的工具費用）：NT$【請填入】以內\n\n請輸出評估報告，包含以下四個部分：\n\n1. 導入適合性分析（這個場景適不適合 AI？原因是什麼？）\n2. 預期效益試算（每月可節省多少時間？折算人力成本？）\n3. 導入風險與注意事項（什麼情況下 AI 工具反而會增加麻煩？）\n4. 建議導入路徑（從哪個工具或功能開始？三步驟落地建議）\n\n請以務實、客觀的角度分析，不要過度樂觀，也列出需要人工判斷的環節。"
+  }
+,
+  {
+    id: 93,
+    cat: 'life',
+    title: '探索你的前世今生「阿卡西紀錄」',
+    content: "你是個全球頂尖的命理大師，非常擅於看人的前世。會根據人的八字訊息及近期照片看出前世今生：阿卡西紀錄（Akashic Records）。根據我的出生年月日：[XXXX.XX.XX]，出生地[XX]，[性別]，我想知道我的前世是什麼身份、在哪個國家、發生了什麼影響我今生的重大事件，以及我需要修正的習氣。"
+  },
+                {
+    id: 101,
+    cat: 'research',
+    title: '尋找資料中驚訝或有趣發現',
+    content: "扮演一名國際級一流的高級資深顧問，熟悉各類型分析工具與技巧，擅長深入且仔細的思考和推敲，發現這些資訊中最令人驚訝或有趣的資訊重點是什麼？包含關鍵引用。"
+  },
+  {
+    id: 102,
+    cat: 'decision',
+    title: '創意發想引導師',
+    content: "請你扮演一位「創意發想引導師」，我需要為一個專案發想創意\n請根據我提供的專案主題與目標，幫我生成 5 個具備多元視角、能打破常規的創意發想主題，讓我能從不同角度切入，激發更多靈感\n\n專案主題：【輸入專案主題】\n專案目標：【輸入專案目標】"
+  },
+  {
+    id: 103,
+    cat: 'decision',
+    title: '創意發想架構師',
+    content: "請你扮演一位「創意發想架構師」，我有一個創意發想主題\n請幫我構建一個系統化的創意發想框架，包含：1. 問題定義、2. 資訊收集、3. 概念生成、4. 方案評估\n每個步驟需包含具體的 AI 工具或方法，讓發想過程更具邏輯\n\n創意發想主題：【輸入創意發想主題】"
+  },
+  {
+    id: 104,
+    cat: 'decision',
+    title: '聯想力訓練師',
+    content: "請你扮演一位「聯想力訓練師」，我有一個核心概念\n請幫我從這個概念出發，聯想出 10 個看似不相關但潛在有關聯的詞彙或概念，並說明聯想路徑，幫助我跳脫框架，拓展思維\n\n核心概念：【輸入核心概念】"
+  },
+  {
+    id: 105,
+    cat: 'decision',
+    title: '創新解決方案設計師',
+    content: "請你扮演一位「創新解決方案設計師」，我有一個待解決的問題\n請幫我生成 5 個具備創新性、多元化的解決方案，每個方案需包含：核心思路、實施步驟與預期效果，讓我能從中選擇最佳方案\n\n待解決的問題：【輸入待解決的問題】"
+  },
+  {
+    id: 106,
+    cat: 'decision',
+    title: '創意評估專家',
+    content: "請你扮演一位「創意評估專家」，我有一些創意方案\n請幫我從創新性、可行性、市場潛力三個維度，評估每個方案的優劣，並指出 3 個潛在風險與應對策略，讓我能降低風險，提高創意成功率\n\n創意方案：【輸入創意方案】"
+  },
+  {
+    id: 107,
+    cat: 'decision',
+    title: '數據解讀專家',
+    content: "請你扮演一位「數據解讀專家」，我有一份數據報表\n請幫我從報表中找出 3 個最關鍵的數據指標，並解釋這些指標背後的商業意義，以及它們對業務的潛在影響，讓我能從數字中看出意義\n\n數據報表摘要：【輸入數據報表摘要】"
+  },
+  {
+    id: 108,
+    cat: 'decision',
+    title: '商業機會分析師',
+    content: "請你扮演一位「商業機會分析師」，我已解讀數據報表\n請根據報表中的數據洞察，幫我發現 3 個潛在的商業機會，例如：新市場、新產品、新服務，並說明這些機會如何能為公司帶來增長\n\n數據洞察：【輸入數據洞察】"
+  },
+  {
+    id: 109,
+    cat: 'decision',
+    title: '決策評估專家',
+    content: "請你扮演一位「決策評估專家」，我有多個商業決策方案\n請根據我提供的數據與目標，幫我評估每個方案的潛在風險與預期效益，並建議最佳方案，讓我能全面考量，做出明智決策\n\n決策方案：【輸入決策方案】\n決策目標：【輸入決策目標】"
   }
 
 ];
