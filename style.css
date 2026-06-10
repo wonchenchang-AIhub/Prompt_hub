@@ -98,7 +98,7 @@ pre    { font-family:'JetBrains Mono', monospace; }
   font-family: var(--font-mono);
   font-size: 10px; font-weight: 500;
   letter-spacing: 0.15em; text-transform: uppercase;
-  color: #3d5050; margin-bottom: 4px;
+  color: #94a3b8; margin-bottom: 4px;
 }
 .hero-body {
   display: flex; align-items: center; gap: 24px;
@@ -113,11 +113,11 @@ pre    { font-family:'JetBrains Mono', monospace; }
   margin-bottom: 2px; letter-spacing: -0.01em;
 }
 .hero-tagline {
-  font-size: 10px; color: #2d6060;
-  margin-bottom: 0; font-weight: 400;
+  font-size: 10px; color: #f5c842;
+  margin-bottom: 0; font-weight: 500;
 }
-.hero-accent { color: #00d4aa; font-weight: 600; }
-.hero-tagline .hero-accent { color: #00d4aa; }
+.hero-accent { color: #f5c842; font-weight: 700; }
+.hero-tagline .hero-accent { color: #f5c842; }
 .hero-quote-inline {
   font-size: 9px; color: #2a3a3a;
   font-style: italic; white-space: nowrap;
