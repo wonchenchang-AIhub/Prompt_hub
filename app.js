@@ -23,7 +23,7 @@ function getCasePrompt(idx) {
 }
 
 /* ── Copy-count persistence (GitHub Gist + localStorage fallback) ───────── */
-var _GH_TOKEN   = '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';
+var _GH_TOKEN   = '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';
 var _GIST_ID    = '9b698905014cc381f348a36b95e9aab2';
 var _GIST_URL   = 'https://api.github.com/gists/' + _GIST_ID;
 var _LS_KEY     = 'prompt_copy_counts';
@@ -42,6 +42,25 @@ function getCount(id) {
 }
 
 // 從 Gist 拉最新數據，合併後更新本地
+
+function refreshAllCountPills() {
+  if (!_memCounts) return;
+  document.querySelectorAll('.card[data-id]').forEach(function(card) {
+    var id  = parseInt(card.getAttribute('data-id'));
+    var cnt = (_memCounts[id] || 0);
+    var pill = card.querySelector('.card-copies');
+    if (!pill) return;
+    if (cnt > 0) {
+      pill.textContent = '⎘ ' + fmt(cnt);
+      pill.title = '已複製 ' + cnt + ' 次';
+      pill.classList.remove('card-copies-zero');
+    } else {
+      pill.textContent = '⎘ 0';
+      pill.classList.add('card-copies-zero');
+    }
+  });
+}
+
 function syncFromGist() {
   fetch(_GIST_URL, {
     headers: {
