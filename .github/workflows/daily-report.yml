@@ -1,0 +1,260 @@
+name: Prompt Hub 每日使用報告
+
+on:
+  schedule:
+    # 每天台灣時間早上 8:00（UTC+8 = UTC 00:00）
+    - cron: '0 0 * * *'
+  workflow_dispatch:   # 也可以手動觸發測試
+
+jobs:
+  daily-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 產生每日報告並寄送 Gmail
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: 9b698905014cc381f348a36b95e9aab2
+          GMAIL_USER: wonchen.chang@gmail.com
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: wonchen.chang@gmail.com
+        run: |
+          python3 << 'PYEOF'
+          import urllib.request, json, os, smtplib
+          from email.mime.text import MIMEText
+          from email.mime.multipart import MIMEMultipart
+          from datetime import datetime, timezone, timedelta
+
+          GIST_TOKEN = os.environ['GIST_TOKEN']
+          GIST_ID    = os.environ['GIST_ID']
+          GMAIL_USER = os.environ['GMAIL_USER']
+          GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD']
+          NOTIFY_TO  = os.environ['NOTIFY_EMAIL']
+
+          # 台灣時間
+          TW = timezone(timedelta(hours=8))
+          today = datetime.now(TW).strftime('%Y/%m/%d')
+
+          # ── 分類對照表 ──────────────────────────────────────────────────
+          CAT_LABELS = {
+              'preset':'⚙️ AI工具設定', 'decision':'📊 決策與分析',
+              'proposal':'📋 企劃與提案', 'comms':'💼 職場溝通',
+              'writing':'✍️ 文稿優化', 'ai_roles':'🧠 策略智囊',
+              'industry':'📈 產業分析', 'sales':'💰 銷售業務',
+              'research':'🔬 研究分析', 'routine':'📅 日常效率',
+              'learning':'🎓 學習成長', 'life':'✨ 生活娛樂',
+          }
+
+          # 提示詞 id → (cat, title) 對照
+          PROMPTS = {
+              "1":("preset","個人化預設提示詞"),
+              "3":("decision","決策分析"),
+              "4":("decision","方案分析與比較（六頂思考帽）"),
+              "5":("decision","決策分析與風險評估（RPN+KSF）"),
+              "6":("decision","風險管理"),
+              "7":("decision","問題解決與分析（5-Why+8D）"),
+              "8":("industry","頂級分析師分析套路模組"),
+              "9":("proposal","專案規劃分析"),
+              "10":("proposal","問題釐清（萬用雙向協作）"),
+              "11":("proposal","計畫提案自我審查"),
+              "12":("proposal","商業提案企劃"),
+              "13":("proposal","創新提案規劃（SCAMPER+TRIZ）"),
+              "14":("comms","撰寫專業電子郵件"),
+              "15":("comms","配合受眾改寫內容"),
+              "16":("comms","草擬會議邀請"),
+              "17":("comms","溝通談判"),
+              "18":("comms","適法性（合規性）評估"),
+              "19":("writing","萬用校稿"),
+              "20":("routine","每日任務排序"),
+              "21":("routine","每日新聞摘要排程"),
+              "22":("sales","萬用銷售Prompt模板"),
+              "23":("sales","邀約Prompt（Eric Worre超間接法）"),
+              "24":("sales","跟進Prompt（Reactance Theory）"),
+              "25":("sales","疑慮處理Prompt（Cialdini一致性原則）"),
+              "26":("learning","高效學習模式"),
+              "27":("sales","招募Prompt（Curiosity Gap）"),
+              "28":("life","生成個人特製名片（DM）"),
+              "29":("sales","沉默成交Prompt（Sandler平等姿態）"),
+              "30":("ai_roles","策略分析：Rex首席策略家"),
+              "31":("ai_roles","深度研究：Sage深度研究員"),
+              "32":("ai_roles","爆款行銷設計：Blaze爆款行銷家"),
+              "33":("writing","消除AI味：人類寫作風格"),
+              "34":("writing","消除AI味：對話式語氣"),
+              "35":("writing","消除AI味：個人聲音"),
+              "36":("writing","消除AI味：自然流暢編輯器"),
+              "37":("writing","消除AI味：可讀性提升"),
+              "38":("research","研究助手"),
+              "39":("ai_roles","差異化創新：Nova差異化創意家"),
+              "40":("learning","學習教練：快速入門"),
+              "41":("research","內容分析師"),
+              "43":("research","素材主題盤點"),
+              "44":("research","矛盾偵測：找出文件分歧"),
+              "45":("research","跨受眾簡報：根據對象重新包裝研究"),
+              "46":("research","問題生成器：挖掘研究盲點"),
+              "47":("research","證據強度評級：辨別哪些主張站得住腳"),
+              "48":("research","時間線重建：還原因果脈絡"),
+              "49":("research","反駁防禦：發表前自我壓力測試"),
+              "50":("research","知識缺口地圖：清楚知道還需要找什麼"),
+              "51":("research","洞察提取：找出真正的意義"),
+              "52":("research","最終報告生成：把研究成果轉成可用文件"),
+              "53":("industry","市場規模評估(TAM/SAM/SOM)"),
+              "54":("industry","客戶畫像構建工具"),
+              "55":("industry","競爭對手定位圖"),
+              "56":("industry","定價策略逆向工程"),
+              "57":("industry","行業趨勢報告"),
+              "58":("industry","客戶訪談問題生成器"),
+              "59":("industry","市場進入管道分析"),
+              "60":("industry","高效問卷調查設計"),
+              "61":("industry","真正驅動決策的SWOT分析"),
+              "62":("routine","草擬工作進度報告"),
+              "63":("routine","會議紀錄轉行動清單"),
+              "64":("comms","跨部門協作溝通"),
+              "65":("ai_roles","任務執行展開：Iris超速執行者"),
+              "66":("learning","蘇格拉底式學習教練"),
+              "67":("learning","學習教練：概念分解"),
+              "68":("research","尋找矛盾"),
+              "69":("research","間隙分析GapAnalysis"),
+              "70":("research","尋找驚訝發現"),
+              "71":("research","掌握核心主題"),
+              "72":("research","紅隊測試"),
+              "73":("research","正反辯證"),
+              "74":("preset","AI自我檢討優化指令"),
+              "75":("proposal","政府計畫書｜知識庫準備清單"),
+              "76":("proposal","政府計畫書｜專案系統提示詞"),
+              "77":("proposal","政府計畫書｜P1標案解構"),
+              "78":("proposal","政府計畫書｜P2計畫緣起與團隊優勢"),
+              "79":("proposal","政府計畫書｜P3執行策略與時程"),
+              "80":("proposal","政府計畫書｜P4效益評估與防禦測試"),
+              "81":("writing","專家審稿"),
+              "82":("research","主題綜合分析"),
+              "83":("industry","McKinsey顧問型一頁式總結"),
+              "84":("research","深度報導、研究報告與事實查核"),
+              "85":("sales","報價草稿生成"),
+              "86":("comms","客服回覆草稿"),
+              "87":("comms","行銷貼文生成器"),
+              "88":("routine","業務日報整理"),
+              "89":("research","文件重點摘要"),
+              "90":("sales","客戶追蹤話術生成"),
+              "91":("routine","會議紀錄轉行動清單"),
+              "92":("proposal","AI工具導入評估"),
+              "102":("proposal","創意發想引導師"),
+              "103":("proposal","創意發想架構師"),
+              "104":("proposal","聯想力訓練師"),
+              "105":("proposal","創新解決方案設計師"),
+              "106":("proposal","創意評估專家"),
+              "107":("proposal","數據解讀專家"),
+              "108":("proposal","商業機會分析師"),
+              "109":("proposal","決策評估專家"),
+          }
+
+          # ── 讀取目前計數 ─────────────────────────────────────────────
+          def gist_read():
+              req = urllib.request.Request(
+                  f"https://api.github.com/gists/{GIST_ID}",
+                  headers={
+                      "Authorization": f"token {GIST_TOKEN}",
+                      "Accept": "application/vnd.github+json",
+                      "User-Agent": "PromptHub"
+                  }
+              )
+              with urllib.request.urlopen(req, timeout=15) as r:
+                  body = json.loads(r.read().decode())
+              return json.loads(body["files"]["counts.json"]["content"])
+
+          def gist_write(payload):
+              data = json.dumps({
+                  "files": {"counts.json": {"content": json.dumps(payload)}}
+              }).encode()
+              req = urllib.request.Request(
+                  f"https://api.github.com/gists/{GIST_ID}",
+                  data=data, method="PATCH",
+                  headers={
+                      "Authorization": f"token {GIST_TOKEN}",
+                      "Accept": "application/vnd.github+json",
+                      "Content-Type": "application/json",
+                      "User-Agent": "PromptHub"
+                  }
+              )
+              with urllib.request.urlopen(req, timeout=15): pass
+
+          gist_data = gist_read()
+          today_counts    = gist_data.get("counts", {})
+          yesterday_counts = gist_data.get("yesterday_snapshot", {})
+
+          # ── 計算增量 ─────────────────────────────────────────────────
+          cat_today = {}
+          cat_delta = {}
+          top_prompts = []
+
+          for pid, cnt in today_counts.items():
+              cnt = int(cnt)
+              prev = int(yesterday_counts.get(pid, 0))
+              delta = cnt - prev
+              if delta < 0: delta = 0
+
+              info = PROMPTS.get(pid)
+              if not info: continue
+              cat, title = info
+
+              cat_today[cat]  = cat_today.get(cat, 0) + cnt
+              cat_delta[cat]  = cat_delta.get(cat, 0) + delta
+              if delta > 0:
+                  top_prompts.append((delta, title, cat))
+
+          top_prompts.sort(reverse=True)
+          total_today = sum(today_counts.values())
+          total_delta = sum(cat_delta.values())
+
+          # ── 建立郵件內容 ──────────────────────────────────────────────
+          lines = [
+              f"📊 Prompt Hub 每日使用報告",
+              f"日期：{today}",
+              f"{'─'*40}",
+              f"今日累計複製總數：{total_today}  |  今日新增：+{total_delta}",
+              f"{'─'*40}",
+              "",
+              "【各分類今日新增次數】",
+          ]
+
+          # 排序：今日新增多的在前
+          sorted_cats = sorted(cat_delta.items(), key=lambda x: -x[1])
+          for cat, delta in sorted_cats:
+              label = CAT_LABELS.get(cat, cat)
+              total = cat_today.get(cat, 0)
+              bar   = "▓" * min(delta, 20)
+              lines.append(f"  {label:<14} +{delta:3d}  (累計 {total})  {bar}")
+
+          lines += ["", "【今日最熱門提示詞 Top 10】"]
+          if top_prompts:
+              for i, (delta, title, cat) in enumerate(top_prompts[:10], 1):
+                  label = CAT_LABELS.get(cat, cat)
+                  lines.append(f"  {i:2d}. +{delta} 次  {title}  [{label}]")
+          else:
+              lines.append("  今日尚無新增使用記錄")
+
+          lines += [
+              "",
+              "─"*40,
+              "Prompt Hub · wonchenchang-AIhub.github.io",
+          ]
+
+          body_text = "\n".join(lines)
+
+          # ── 寄送 Gmail ────────────────────────────────────────────────
+          msg = MIMEMultipart("alternative")
+          msg["Subject"] = f"📊 Prompt Hub 日報 {today}  新增 +{total_delta} 次"
+          msg["From"]    = GMAIL_USER
+          msg["To"]      = NOTIFY_TO
+          msg.attach(MIMEText(body_text, "plain", "utf-8"))
+
+          with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+              smtp.login(GMAIL_USER, GMAIL_PASS)
+              smtp.sendmail(GMAIL_USER, NOTIFY_TO, msg.as_bytes())
+
+          print(f"✅ 日報寄送完成 ({today})  總計 {total_today}  今日新增 +{total_delta}")
+
+          # ── 更新昨日快照（供明天比對用）───────────────────────────────
+          gist_data["yesterday_snapshot"] = dict(today_counts)
+          gist_write(gist_data)
+          print("✅ 昨日快照已更新")
+          PYEOF
