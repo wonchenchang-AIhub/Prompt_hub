@@ -7,7 +7,7 @@ const CATEGORIES = {
   writing:  { label: '文稿優化',    icon: '✍️', class: 'cat-writing'  },
   ai_roles: { label: '策略智囊',    icon: '🧠', class: 'cat-ai-roles' },
   industry: { label: '產業分析',    icon: '📈', class: 'cat-industry' },
-  sales:    { label: '銷售業務',    icon: '💰', class: 'cat-sales'    },
+  sales:    { label: '行銷銷售',    icon: '💰', class: 'cat-sales'    },
   research: { label: '研究分析',    icon: '🔬', class: 'cat-research' },
   routine:  { label: '日常效率',    icon: '📅', class: 'cat-routine'  },
   learning: { label: '學習成長',    icon: '🎓', class: 'cat-learning' },
@@ -1870,7 +1870,7 @@ Step3 給一個清楚的出口，讓他自己決定
   },
   {
     id: 87,
-    cat: 'comms',
+    cat: 'sales',
     title: '行銷貼文生成器',
     content: "你是一位中小企業行銷文案專家，擅長以有限資源創作吸睛的社群內容。\n\n為以下產品或服務，寫三個版本的社群貼文，分別對應不同風格需求：\n\n【產品／服務名稱】：【請填入】\n【主要賣點】：【請填入 2–3 個核心優勢，如：省時、高耐用度、MIT 品質】\n【目標客群】：【請填入，如：中小企業主、家庭主婦、30–45 歲上班族】\n【發文平台】：□ Facebook　□ Instagram　□ LINE 官方帳號　□ LinkedIn\n【附加資訊（選填）】：促銷活動、期限、聯絡方式、官網連結\n\n請輸出三個版本：\n版本 A｜活潑親切型：語氣輕鬆、口語化，適合引發互動\n版本 B｜專業信任型：強調品質與專業，適合 B2B 或高單價產品\n版本 C｜促銷行動型：帶有明確行動呼籲（CTA），適合推動購買\n\n每個版本限 150 字以內，可附上建議的 Hashtag 3–5 個。"
   },
