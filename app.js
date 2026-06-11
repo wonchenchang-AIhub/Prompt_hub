@@ -23,7 +23,7 @@ function getCasePrompt(idx) {
 }
 
 /* ── Copy-count persistence (GitHub Gist + localStorage fallback) ───────── */
-var _GH_TOKEN   = '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';
+var _GH_TOKEN   = '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';
 var _GIST_ID    = '9b698905014cc381f348a36b95e9aab2';
 var _GIST_URL   = 'https://api.github.com/gists/' + _GIST_ID;
 var _LS_KEY     = 'prompt_copy_counts';
