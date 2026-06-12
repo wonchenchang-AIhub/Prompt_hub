@@ -118,7 +118,7 @@ pre    { font-family:'JetBrains Mono', monospace; }
 }
 .hero-accent { color: #f5c842; font-weight: 400; }
 .hero-tagline .hero-accent { color: #f5c842; }
-.hero-block .search-wrap { max-width: 100%; }
+.hero-block .search-wrap { max-width: 420px; }
 .hero-block .search-input {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(0,212,170,0.2);
@@ -438,6 +438,7 @@ pre    { font-family:'JetBrains Mono', monospace; }
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 .hero-quote-above {
+  max-width: 420px;
   font-size: 10px;
   color: #c8d8d8;
   font-style: italic;
