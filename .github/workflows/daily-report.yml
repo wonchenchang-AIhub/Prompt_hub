@@ -13,6 +13,7 @@ jobs:
       - name: 產生每日報告並寄送 Gmail
         env:
           JSONBIN_KEY: ${{ secrets.JSONBIN_KEY }}
+          JSONBIN_ACCESS_KEY: ${{ secrets.JSONBIN_ACCESS_KEY }}
           BIN_ID: 6a389834f5f4af5e291a94f6
           GMAIL_USER: wonchen.chang@gmail.com
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
@@ -25,6 +26,7 @@ jobs:
           from datetime import datetime, timezone, timedelta
 
           JSONBIN_KEY = os.environ['JSONBIN_KEY']
+          JSONBIN_ACCESS_KEY = os.environ['JSONBIN_ACCESS_KEY']
           BIN_ID      = os.environ['BIN_ID']
           GMAIL_USER  = os.environ['GMAIL_USER']
           GMAIL_PASS  = os.environ['GMAIL_APP_PASSWORD']
@@ -168,6 +170,7 @@ jobs:
                   BIN_URL + '/latest',
                   headers={
                       'X-Master-Key': JSONBIN_KEY,
+                      'X-Access-Key': JSONBIN_ACCESS_KEY,
                       'X-Bin-Meta': 'false'
                   }
               )
