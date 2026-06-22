@@ -164,12 +164,10 @@ jobs:
 
           # ── 讀取 JSONBin 計數 ─────────────────────────────────────────
           def bin_read():
+              # Public bin：不帶 Key 直接讀取
               req = urllib.request.Request(
                   BIN_URL + '/latest',
-                  headers={
-                      'X-Master-Key': JSONBIN_KEY,
-                      'X-Bin-Meta': 'false'
-                  }
+                  headers={'X-Bin-Meta': 'false'}
               )
               with urllib.request.urlopen(req, timeout=15) as r:
                   return json.loads(r.read().decode())
