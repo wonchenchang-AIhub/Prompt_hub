@@ -23,9 +23,9 @@ function getCasePrompt(idx) {
 }
 
 /* ── Copy-count persistence (GitHub Gist + localStorage fallback) ───────── */
-var _GH_TOKEN   = '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';
-var _GIST_ID    = '9b698905014cc381f348a36b95e9aab2';
-var _GIST_URL   = 'https://api.github.com/gists/' + _GIST_ID;
+var _JSONBIN_KEY = '$2a$10$WRBPAEz0JT3wvVYlWyg07ewTjQaoZpsM8BEmJx5O/E3w2B5gwvE1y';
+var _BIN_ID     = '6a389834f5f4af5e291a94f6';
+var _BIN_URL    = 'https://api.jsonbin.io/v3/b/6a389834f5f4af5e291a94f6';
 var _LS_KEY     = 'prompt_copy_counts';
 var _memCounts  = null;
 var _pushTimer  = null;
@@ -73,44 +73,45 @@ function refreshAllCountPills() {
 }
 
 function syncFromGist() {
-  fetch(_GIST_URL, {
-    headers: {
-      'Authorization': 'token ' + _GH_TOKEN,
-      'Accept': 'application/vnd.github+json'
-    }
+  fetch(_BIN_URL + '/latest', {
+    headers: { 'X-Master-Key': _JSONBIN_KEY }
   })
   .then(function(r) { return r.ok ? r.json() : null; })
   .then(function(data) {
-    if (!data) return;
-    var remote = {};
-    try { remote = JSON.parse(data.files['counts.json'].content).counts || {}; } catch(e) {}
+    if (!data || !data.record) return;
+    var remote = data.record.counts || {};
     var local  = _lsLoad();
-    var merged = Object.assign({}, local);
+    var merged = Object.assign({}, _INIT_COUNTS);
     Object.keys(remote).forEach(function(k) {
-      merged[k] = Math.max(parseInt(merged[k]) || 0, parseInt(remote[k]) || 0);
+      merged[k] = Math.max(parseInt(merged[k])||0, parseInt(remote[k])||0);
+    });
+    Object.keys(local).forEach(function(k) {
+      merged[k] = Math.max(parseInt(merged[k])||0, parseInt(local[k])||0);
     });
     _memCounts = merged;
     _lsSave(merged);
     refreshAllCountPills();
   })
-  .catch(function() { _memCounts = _lsLoad(); });
+  .catch(function() {
+    _memCounts = _lsLoad();
+    refreshAllCountPills();
+  });
 }
 
 // 防抖推送：500ms 內多次複製只推一次
-function pushToGist() {
+function pushToBin() {
   clearTimeout(_pushTimer);
   _pushTimer = setTimeout(function() {
     var payload = JSON.stringify({ counts: _memCounts || _lsLoad() });
-    fetch(_GIST_URL, {
-      method: 'PATCH',
+    fetch(_BIN_URL, {
+      method: 'PUT',
       headers: {
-        'Authorization': 'token ' + _GH_TOKEN,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Master-Key': _JSONBIN_KEY
       },
-      body: JSON.stringify({ files: { 'counts.json': { content: payload } } })
+      body: payload
     }).catch(function() {});
-  }, 500);
+  }, 2000);
 }
 
 function incrementCount(id) {
@@ -118,7 +119,7 @@ function incrementCount(id) {
   c[id] = (c[id] || 0) + 1;
   _memCounts = c;
   _lsSave(c);
-  pushToGist();
+  pushToBin();
   return c[id];
 }
 
