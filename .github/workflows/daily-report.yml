@@ -5,24 +5,18 @@ on:
     - cron: '0 0 * * *'   # 每天台灣時間早上 8:00（UTC 00:00）
   workflow_dispatch:        # 手動觸發測試
 
-permissions:
-  contents: write           # 允許讀寫 repo 檔案
-
 jobs:
   daily-report:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
       - name: 產生每日報告並寄送 Gmail
         env:
+          JSONBIN_KEY: ${{ secrets.JSONBIN_KEY }}
+          BIN_ID: 6a389834f5f4af5e291a94f6
           GMAIL_USER: wonchen.chang@gmail.com
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           NOTIFY_EMAIL: wonchen.chang@gmail.com
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: wonchenchang-AIhub/Prompt_hub
         run: |
           python3 << 'PYEOF'
           import urllib.request, json, os, smtplib
@@ -30,11 +24,12 @@ jobs:
           from email.mime.multipart import MIMEMultipart
           from datetime import datetime, timezone, timedelta
 
-          GMAIL_USER = os.environ['GMAIL_USER']
-          GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD']
-          NOTIFY_TO  = os.environ['NOTIFY_EMAIL']
-          GH_TOKEN   = os.environ['GITHUB_TOKEN']
-          REPO       = os.environ['REPO']
+          JSONBIN_KEY = os.environ['JSONBIN_KEY']
+          BIN_ID      = os.environ['BIN_ID']
+          GMAIL_USER  = os.environ['GMAIL_USER']
+          GMAIL_PASS  = os.environ['GMAIL_APP_PASSWORD']
+          NOTIFY_TO   = os.environ['NOTIFY_EMAIL']
+          BIN_URL     = f"https://api.jsonbin.io/v3/b/{BIN_ID}"
 
           TW    = timezone(timedelta(hours=8))
           today = datetime.now(TW).strftime('%Y/%m/%d')
@@ -45,7 +40,8 @@ jobs:
               'writing':'✍️ 文稿優化','ai_roles':'🧠 策略智囊',
               'industry':'📈 產業分析','sales':'💰 行銷銷售',
               'research':'🔬 研究分析','routine':'📅 日常效率',
-              'learning':'🎓 學習成長','life':'✨ 生活娛樂',
+              'learning':'🎓 學習成長','creative':'🎨 視覺創作',
+              'life':'✨ 生活娛樂',
           }
 
           PROMPTS = {
@@ -64,10 +60,10 @@ jobs:
               "14":("comms","撰寫專業電子郵件"),
               "15":("comms","配合受眾改寫內容"),
               "16":("comms","草擬會議邀請"),
-              "17":("comms","溝通談判"),
+              "17":("routine","每日任務排序"),
               "18":("comms","適法性評估"),
               "19":("writing","萬用校稿"),
-              "20":("routine","每日任務排序"),
+              "20":("comms","溝通談判"),
               "21":("routine","每日新聞摘要排程"),
               "22":("sales","萬用銷售Prompt模板"),
               "23":("sales","邀約Prompt"),
@@ -147,48 +143,68 @@ jobs:
               "107":("proposal","數據解讀專家"),
               "108":("proposal","商業機會分析師"),
               "109":("proposal","決策評估專家"),
+              "110":("creative","品牌社群視覺生成器"),
+              "111":("creative","工作場景圖像設計器"),
+              "112":("creative","生活實用圖像創作器"),
+              "113":("creative","創意插畫與角色設計器"),
+              "114":("creative","照片風格轉換提示詞生成器"),
+              "115":("ai_roles","VETO決策合理性審計官"),
+              "116":("ai_roles","SCAR組織政治與人性獵手"),
+              "117":("ai_roles","GRIP執行現實校驗官"),
+              "118":("ai_roles","LENS資訊完整性稽核員"),
+              "119":("ai_roles","TOLL代價與後遺症預測師"),
+              "120":("ai_roles","CLAUSE法務合規審查官"),
+              "121":("ai_roles","六顧問交詰辯論"),
+              "122":("life","自由行行程規劃顧問"),
+              "123":("routine","政府採購法｜排程監測指令"),
+              "124":("routine","政府採購法｜條文深度解析"),
+              "125":("routine","政府採購法｜定期報告格式"),
+              "126":("proposal","NABC系列提案模組"),
           }
 
-          # ── 讀取 app.js 裡的 _INIT_COUNTS 作為今日計數基準 ──────────────
-          # 因為沒有外部服務，直接用 _INIT_COUNTS 做今日展示
-          # 並讀取昨日快照做比對
-          INIT_COUNTS = {
-              "1":18,"3":6,"4":8,"5":7,"6":7,"7":7,"8":16,"9":9,
-              "10":14,"11":11,"12":14,"13":11,"14":8,"15":8,"16":9,
-              "17":10,"18":9,"19":22,"20":9,"21":8,"22":11,"23":10,
-              "24":9,"25":9,"26":11,"27":8,"28":5,"29":10,"30":11,
-              "31":10,"32":11,"33":9,"34":10,"35":8,"36":9,"37":8,
-              "38":10,"39":9,"40":11,"41":7,"43":7,"44":6,"45":7,
-              "46":6,"47":6,"48":7,"49":6,"50":7,"51":7,"52":6,
-              "53":9,"54":9,"55":8,"56":9,"57":8,"58":8,"59":9,
-              "60":8,"61":9,"62":8,"63":8,"64":8,"65":9,"66":7,
-              "67":8,"68":6,"69":7,"70":6,"71":6,"72":7,"73":6,
-              "74":22,"75":9,"76":9,"77":10,"78":10,"79":10,"80":9,
-              "81":18,"82":6,"83":9,"84":7,"85":10,"86":10,"87":10,
-              "88":9,"89":7,"90":11,"91":9,"92":8,"102":9,"103":10,
-              "104":8,"105":9,"106":9,"107":9,"108":9,"109":10,
-          }
+          # ── 讀取 JSONBin 計數 ─────────────────────────────────────────
+          def bin_read():
+              req = urllib.request.Request(
+                  BIN_URL + '/latest',
+                  headers={
+                      'X-Master-Key': JSONBIN_KEY,
+                      'X-Bin-Meta': 'false'
+                  }
+              )
+              with urllib.request.urlopen(req, timeout=15) as r:
+                  return json.loads(r.read().decode())
 
-          # 讀取昨日快照
-          snapshot_path = 'counts-snapshot.json'
+          def bin_write(payload):
+              data = json.dumps(payload).encode()
+              req = urllib.request.Request(
+                  BIN_URL,
+                  data=data,
+                  method='PUT',
+                  headers={
+                      'Content-Type': 'application/json',
+                      'X-Master-Key': JSONBIN_KEY
+                  }
+              )
+              with urllib.request.urlopen(req, timeout=15): pass
+
+          # 讀取今日計數
           try:
-              with open(snapshot_path) as f:
-                  yesterday = json.load(f)
-          except:
-              yesterday = {}
+              record          = bin_read()
+              today_counts    = record.get('counts', {})
+              yesterday_counts = record.get('yesterday_snapshot', {})
+              print(f"✅ JSONBin 讀取成功，{len(today_counts)} 筆")
+          except Exception as e:
+              print(f"❌ JSONBin 讀取失敗：{e}")
+              exit(1)
 
-          # 合併：取今日初始值和昨日快照的最大值
-          today_counts = {}
-          for pid, val in INIT_COUNTS.items():
-              today_counts[pid] = max(val, int(yesterday.get(pid, 0)))
-
-          # 計算各分類數據
+          # ── 計算各分類增量 ────────────────────────────────────────────
           cat_today = {}
           cat_delta = {}
           top_prompts = []
 
           for pid, cnt in today_counts.items():
-              prev  = int(yesterday.get(pid, 0))
+              cnt   = int(cnt)
+              prev  = int(yesterday_counts.get(pid, 0))
               delta = max(0, cnt - prev)
               info  = PROMPTS.get(pid)
               if not info: continue
@@ -199,7 +215,7 @@ jobs:
                   top_prompts.append((delta, title, cat))
 
           top_prompts.sort(reverse=True)
-          total_today = sum(today_counts.values())
+          total_today = sum(int(v) for v in today_counts.values())
           total_delta = sum(cat_delta.values())
 
           # ── 建立郵件 ──────────────────────────────────────────────────
@@ -212,7 +228,6 @@ jobs:
               "",
               "【各分類今日新增次數】",
           ]
-
           for cat, delta in sorted(cat_delta.items(), key=lambda x: -x[1]):
               label = CAT_LABELS.get(cat, cat)
               total = cat_today.get(cat, 0)
@@ -225,14 +240,9 @@ jobs:
                   label = CAT_LABELS.get(cat, cat)
                   lines.append(f"  {i:2d}. +{delta} 次  {title}  [{label}]")
           else:
-              lines.append("  今日尚無新增記錄（初始化日）")
+              lines.append("  今日尚無新增記錄")
 
-          lines += [
-              "",
-              "─" * 44,
-              "Prompt Hub · wonchenchang-AIhub.github.io",
-          ]
-
+          lines += ["", "─" * 44, "Prompt Hub · wonchenchang-AIhub.github.io"]
           body_text = "\n".join(lines)
 
           msg = MIMEMultipart("alternative")
@@ -244,20 +254,10 @@ jobs:
           with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
               smtp.login(GMAIL_USER, GMAIL_PASS)
               smtp.sendmail(GMAIL_USER, NOTIFY_TO, msg.as_bytes())
-
           print(f"✅ 日報寄送完成（{today}）總計 {total_today}  新增 +{total_delta}")
 
-          # ── 更新快照 ──────────────────────────────────────────────────
-          with open(snapshot_path, 'w') as f:
-              json.dump(today_counts, f)
-
-          print("✅ 快照已更新至 counts-snapshot.json")
+          # ── 更新昨日快照 ───────────────────────────────────────────────
+          record['yesterday_snapshot'] = dict(today_counts)
+          bin_write(record)
+          print("✅ 昨日快照已更新至 JSONBin")
           PYEOF
-
-      - name: 提交更新快照
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add counts-snapshot.json
-          git diff --staged --quiet || git commit -m "chore: update daily snapshot $(date +'%Y-%m-%d')"
-          git push
