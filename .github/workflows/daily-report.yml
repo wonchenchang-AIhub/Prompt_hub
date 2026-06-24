@@ -184,17 +184,30 @@ jobs:
               "122":5,"123":5,"124":5,"125":5,"126":5,
           }
 
-          # ── 讀取 counts-snapshot.json（repo 內的檔案）────────────────
+          WORKER_URL = 'https://prompt-hub-counter.wonchen-chang.workers.dev'
+
+          # ── 從 Cloudflare Worker 讀取今日計數 ─────────────────────────
+          import urllib.request as _req
           snapshot_path = 'counts-snapshot.json'
           try:
-              with open(snapshot_path) as f:
-                  snapshot = json.load(f)
-              today_counts     = snapshot.get('today', INIT_COUNTS.copy())
-              yesterday_counts = snapshot.get('yesterday', {})
-              print(f"✅ 快照讀取成功，{len(today_counts)} 筆")
+              r = _req.urlopen(WORKER_URL + '/counts', timeout=15)
+              today_counts = json.loads(r.read().decode())
+              # 合併 INIT_COUNTS：取兩者最大值
+              merged = dict(INIT_COUNTS)
+              for k, v in today_counts.items():
+                  merged[k] = max(int(merged.get(k,0)), int(v))
+              today_counts = merged
+              print(f"✅ Worker 讀取成功，{len(today_counts)} 筆")
           except Exception as e:
-              print(f"⚠️ 快照讀取失敗（{e}），使用初始值")
-              today_counts     = INIT_COUNTS.copy()
+              print(f"⚠️ Worker 讀取失敗（{e}），使用初始值")
+              today_counts = dict(INIT_COUNTS)
+
+          # 讀取昨日快照
+          try:
+              with open(snapshot_path) as f:
+                  snap = json.load(f)
+              yesterday_counts = snap.get('yesterday', {})
+          except:
               yesterday_counts = {}
 
           # ── 計算各分類增量 ────────────────────────────────────────────
