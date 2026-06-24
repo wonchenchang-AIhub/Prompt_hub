@@ -23,12 +23,11 @@ function getCasePrompt(idx) {
 }
 
 /* ── Copy-count persistence (GitHub Gist + localStorage fallback) ───────── */
-var _JSONBIN_KEY = '$2a$10$WRBPAEz0JT3wvVYlWyg07ewTjQaoZpsM8BEmJx5O/E3w2B5gwvE1y';
-var _BIN_ID     = '6a389834f5f4af5e291a94f6';
-var _BIN_URL    = 'https://api.jsonbin.io/v3/b/6a389834f5f4af5e291a94f6';
 var _LS_KEY     = 'prompt_copy_counts';
 var _memCounts  = null;
 var _pushTimer  = null;
+
+var _WORKER_URL = 'https://prompt-hub-counter.wonchen-chang.workers.dev';
 
 var _INIT_COUNTS = {"1":18,"3":6,"4":8,"5":7,"6":7,"7":7,"9":9,"10":14,"11":11,"12":14,"13":11,"14":8,"15":8,"16":8,"17":8,"18":9,"19":22,"81":18,"20":9,"21":12,"22":9,"23":12,"24":11,"25":9,"26":12,"27":7,"28":5,"29":7,"30":7,"31":9,"32":8,"33":11,"34":10,"35":10,"36":11,"37":9,"38":8,"39":9,"40":7,"41":7,"43":7,"44":9,"45":7,"46":5,"47":8,"48":9,"49":5,"50":8,"51":5,"52":9,"8":16,"53":11,"54":9,"55":11,"56":8,"57":7,"58":7,"59":8,"60":9,"61":7,"62":10,"63":9,"64":12,"65":11,"66":12,"67":11,"68":6,"69":7,"70":7,"71":6,"72":7,"73":5,"74":22,"75":9,"76":12,"77":9,"78":9,"79":11,"80":11,"82":7,"83":11,"84":7,"85":11,"86":8,"87":9,"88":7,"89":7,"90":12,"91":9,"92":8,"102":9,"103":12,"104":10,"105":9,"106":11,"107":11,"108":11,"109":9};
 
@@ -73,13 +72,10 @@ function refreshAllCountPills() {
 }
 
 function syncFromGist() {
-  fetch(_BIN_URL + '/latest', {
-    headers: { 'X-Master-Key': _JSONBIN_KEY }
-  })
+  fetch(_WORKER_URL + '/counts')
   .then(function(r) { return r.ok ? r.json() : null; })
-  .then(function(data) {
-    if (!data || !data.record) return;
-    var remote = data.record.counts || {};
+  .then(function(remote) {
+    if (!remote) return;
     var local  = _lsLoad();
     var merged = Object.assign({}, _INIT_COUNTS);
     Object.keys(remote).forEach(function(k) {
@@ -102,15 +98,7 @@ function syncFromGist() {
 function pushToBin() {
   clearTimeout(_pushTimer);
   _pushTimer = setTimeout(function() {
-    var payload = JSON.stringify({ counts: _memCounts || _lsLoad() });
-    fetch(_BIN_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': _JSONBIN_KEY
-      },
-      body: payload
-    }).catch(function() {});
+    // 不批次推送，改為每次複製時即時呼叫 /increment
   }, 2000);
 }
 
@@ -119,7 +107,12 @@ function incrementCount(id) {
   c[id] = (c[id] || 0) + 1;
   _memCounts = c;
   _lsSave(c);
-  pushToBin();
+  // 即時同步到 Cloudflare Worker
+  fetch(_WORKER_URL + '/increment', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({id: String(id)})
+  }).catch(function(){});
   return c[id];
 }
 
