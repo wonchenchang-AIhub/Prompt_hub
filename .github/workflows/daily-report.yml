@@ -202,13 +202,18 @@ jobs:
               print(f"⚠️ Worker 讀取失敗（{e}），使用初始值")
               today_counts = dict(INIT_COUNTS)
 
-          # 讀取昨日快照
+          # 讀取昨日快照（用 snapshot 的 today 作為昨日基準，不用 yesterday）
+          old_today_counts = {}   # 昨天 Worker 的累計值（今天計算差值用）
           try:
               with open(snapshot_path) as f:
                   snap = json.load(f)
-              yesterday_counts = snap.get('yesterday', {})
-          except:
-              yesterday_counts = {}
+              # 用 snap['today'] 作為昨日基準（上次執行時存的 Worker 值）
+              old_today_counts = snap.get('today', {})
+              print(f"✅ 昨日快照讀取成功，基準值 {len(old_today_counts)} 筆")
+          except Exception as e:
+              print(f"⚠️ 昨日快照讀取失敗（{e}），差值將以 INIT_COUNTS 為基準")
+              old_today_counts = dict(INIT_COUNTS)
+          yesterday_counts = old_today_counts
 
           # ── 計算各分類增量 ────────────────────────────────────────────
           cat_today = {}
@@ -269,10 +274,10 @@ jobs:
               smtp.sendmail(GMAIL_USER, NOTIFY_TO, msg.as_bytes())
           print(f"✅ 日報寄送完成（{today}）總計 {total_today}  新增 +{total_delta}")
 
-          # ── 更新快照（今日 → 昨日）────────────────────────────────────
+          # ── 更新快照（today 存 Worker 最新值，yesterday 存前次 today）──
           new_snapshot = {
-              'today':     dict(today_counts),
-              'yesterday': dict(today_counts),
+              'today':     dict(today_counts),       # 本次 Worker 值，明日作為昨日基準
+              'yesterday': dict(old_today_counts),   # 前次 Worker 值，留存記錄
               'updated':   today
           }
           with open(snapshot_path, 'w') as f:
