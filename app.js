@@ -7,6 +7,21 @@
 ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── State ─────────────────────────────────────────────────────────────── */
+
+/* ── Google Form 複製記錄 ─────────────────────────────────────────────── */
+var _COPY_LOG_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd0ceJqdNzp3cHFPvOxkiu4wPy76nHqioj9I-0JP8_CNCjbDg/formResponse';
+
+function logCopyToGoogleForm(prompt) {
+  try {
+    var data = new FormData();
+    data.append('entry.748276167',  String(prompt.id    || ''));
+    data.append('entry.324033027',  String(prompt.title  || ''));
+    data.append('entry.2019876852', String(prompt.cat    || ''));
+    data.append('entry.98204614',   new Date().toISOString());
+    fetch(_COPY_LOG_FORM_URL, { method: 'POST', mode: 'no-cors', body: data });
+  } catch (e) {}
+}
+
 let currentCat = 'all';
 let searchQuery = '';
 
@@ -249,6 +264,7 @@ function cardCopyPromptById(e, btn, id) {
   if (!p) return;
   navigator.clipboard.writeText(p.content).then(() => {
     const newCnt = incrementCount(id);
+    logCopyToGoogleForm(p);
     btn.classList.add('copied-prompt');
     btn.textContent = '✓ 已複製！';
     setTimeout(() => { btn.classList.remove('copied-prompt'); btn.textContent = '⎘ 複製提示詞'; }, 2000);
@@ -355,6 +371,7 @@ document.getElementById('copyBtn').addEventListener('click', () => {
   if (!p) return;
   navigator.clipboard.writeText(p.content).then(() => {
     const newCnt = incrementCount(id);
+    logCopyToGoogleForm(p);
     const btn = document.getElementById('copyBtn');
     btn.classList.add('copied-prompt');
     btn.innerHTML = '<span class="copy-icon">✓</span> 已複製！';
