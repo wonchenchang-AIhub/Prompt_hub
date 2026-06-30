@@ -3,18 +3,18 @@ const CATEGORIES = {
   preset:   { label: 'AI工具設定',  icon: '⚙️', class: 'cat-preset'   },
   decision: { label: '決策與分析',   icon: '📊', class: 'cat-decision' },
   proposal: { label: '企劃與提案',   icon: '📋', class: 'cat-proposal' },
-  project:  { label: '專案管理',     icon: '🗂️', class: 'cat-project'  },
-  comms:    { label: '職場溝通',     icon: '💼', class: 'cat-comms'    },
+  project:  { label: '計畫書與報告', icon: '🗂️', class: 'cat-project'  },
+  creative: { label: '簡報與視覺',  icon: '🎨', class: 'cat-creative' },
+  patent:   { label: '專利分析',    icon: '⚖️', class: 'cat-patent'   },
   writing:  { label: '文稿優化',    icon: '✍️', class: 'cat-writing'  },
   ai_roles: { label: '策略智囊',    icon: '🧠', class: 'cat-ai-roles' },
+  comms:    { label: '職場溝通',     icon: '💼', class: 'cat-comms'    },
   industry: { label: '產業分析',    icon: '📈', class: 'cat-industry' },
-  sales:    { label: '行銷銷售',    icon: '💰', class: 'cat-sales'    },
   research: { label: '研究分析',    icon: '🔬', class: 'cat-research' },
+  sales:    { label: '行銷銷售',    icon: '💰', class: 'cat-sales'    },
   routine:  { label: '日常效率',    icon: '📅', class: 'cat-routine'  },
   learning: { label: '學習成長',    icon: '🎓', class: 'cat-learning' },
-  creative: { label: '簡報與視覺',  icon: '🎨', class: 'cat-creative' },
   life:     { label: '生活娛樂',    icon: '✨', class: 'cat-life'     },
-  patent:   { label: '專利分析',    icon: '⚖️', class: 'cat-patent'   },
 };
 
 const PROMPTS = [
