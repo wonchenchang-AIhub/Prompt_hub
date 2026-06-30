@@ -208,6 +208,7 @@ function renderCards() {
           <span class="card-arrow">↗</span>
         </div>
         <div class="card-title"  onclick="openModal(${p.id})" style="cursor:pointer;">${escapeHtml(p.title)}</div>
+        ${p.desc ? `<div class="card-scene"><span class="card-scene-icon">💡</span><span class="card-scene-text">${escapeHtml(p.desc)}</span></div>` : ''}
         <div class="card-preview" onclick="openModal(${p.id})" style="cursor:pointer;">${escapeHtml(previewText(p.content))}</div>
         ${footer}
         ${casesHTML}
@@ -261,6 +262,13 @@ function openModal(id) {
   catTag.textContent = `${cat.icon} ${cat.label}`;
   catTag.className   = `modal-cat-tag ${cat.class}`;
   document.getElementById('modalTitle').textContent = p.title;
+  const sceneEl = document.getElementById('modalScene');
+  if (p.desc) {
+    sceneEl.textContent = '💡 ' + p.desc;
+    sceneEl.style.display = 'block';
+  } else {
+    sceneEl.style.display = 'none';
+  }
   document.getElementById('modalContent').textContent = p.content;
 
   const cnt = getCount(id);

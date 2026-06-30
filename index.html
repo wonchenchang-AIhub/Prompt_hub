@@ -36,7 +36,7 @@
   <nav class="cat-nav" id="catNav">
   <button class="cat-btn active" data-cat="all">
     <span class="cat-icon">◉</span> 全部
-    <span class="cat-count" id="count-all">137</span>
+    <span class="cat-count" id="count-all">147</span>
   </button>
   <button class="cat-btn" data-cat="preset">
     <span class="cat-icon">⚙️</span> AI工具設定
@@ -91,7 +91,11 @@
     <span class="cat-count">4</span>
   </button>
   <button class="cat-btn" data-cat="creative">
-    <span class="cat-icon">🎨</span> 視覺創作
+    <span class="cat-icon">🎨</span> 簡報與視覺
+    <span class="cat-count">10</span>
+  </button>
+  <button class="cat-btn" data-cat="patent">
+    <span class="cat-icon">⚖️</span> 專利分析
     <span class="cat-count">5</span>
   </button>
 </nav>
@@ -110,6 +114,7 @@
       <button class="modal-close" id="modalClose">✕</button>
     </div>
     <div class="modal-body">
+      <div class="modal-scene" id="modalScene" style="display:none;"></div>
       <pre class="modal-content" id="modalContent"></pre>
     </div>
     <div class="modal-cases" id="modalCases" style="display:none;">
