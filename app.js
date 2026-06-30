@@ -377,6 +377,39 @@ document.getElementById('catNav').addEventListener('click', e => {
   renderCards();
 });
 
+/* ── 分類列：左右箭頭捲動 + 滑鼠滾輪橫向捲動 + 箭頭自動啟用/禁用 ───────── */
+(function setupCatNavScroll() {
+  const nav      = document.getElementById('catNav');
+  const btnLeft  = document.getElementById('catScrollLeft');
+  const btnRight = document.getElementById('catScrollRight');
+  if (!nav || !btnLeft || !btnRight) return;
+
+  function updateArrows() {
+    const max = nav.scrollWidth - nav.clientWidth;
+    btnLeft.disabled  = nav.scrollLeft <= 2;
+    btnRight.disabled = nav.scrollLeft >= max - 2;
+  }
+
+  function scrollByAmount(dir) {
+    nav.scrollBy({ left: dir * Math.max(160, nav.clientWidth * 0.6), behavior: 'smooth' });
+  }
+
+  btnLeft.addEventListener('click', () => scrollByAmount(-1));
+  btnRight.addEventListener('click', () => scrollByAmount(1));
+
+  // 滑鼠垂直滾輪直接轉成橫向捲動（不需要按 Shift）
+  nav.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      nav.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+
+  nav.addEventListener('scroll', updateArrows);
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
+})();
+
 /* ── Search ─────────────────────────────────────────────────────────────── */
 document.getElementById('searchInput').addEventListener('input', e => {
   searchQuery = e.target.value;

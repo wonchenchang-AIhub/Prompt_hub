@@ -31,7 +31,9 @@
   </div>
   </header>
 
-<nav class="cat-nav" id="catNav">
+<div class="cat-nav-wrap">
+  <button class="cat-scroll-btn left" id="catScrollLeft" aria-label="向左捲動" disabled>‹</button>
+  <nav class="cat-nav" id="catNav">
   <button class="cat-btn active" data-cat="all">
     <span class="cat-icon">◉</span> 全部
     <span class="cat-count" id="count-all">137</span>
@@ -93,6 +95,8 @@
     <span class="cat-count">5</span>
   </button>
 </nav>
+  <button class="cat-scroll-btn right" id="catScrollRight" aria-label="向右捲動">›</button>
+</div>
 
 <main class="main-grid" id="cardGrid"></main>
 

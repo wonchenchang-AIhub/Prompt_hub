@@ -133,15 +133,45 @@ pre    { font-family:'JetBrains Mono', monospace; }
 }
 
 /* ── Category Nav ────────────────────────────────────────────────────────── */
-.cat-nav {
+.cat-nav-wrap {
   display: flex; align-items: stretch;
-  overflow-x: auto; scrollbar-width: none;
   background: #080b0f;
   border-bottom: 1px solid rgba(0,212,170,0.1);
-  padding: 0 16px;
   position: relative; z-index: 1;
 }
-.cat-nav::-webkit-scrollbar { display: none; }
+.cat-nav {
+  display: flex; align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,212,170,0.35) transparent;
+  padding: 0 8px;
+  flex: 1 1 auto;
+  scroll-behavior: smooth;
+}
+.cat-nav::-webkit-scrollbar { height: 6px; }
+.cat-nav::-webkit-scrollbar-track { background: transparent; }
+.cat-nav::-webkit-scrollbar-thumb {
+  background: rgba(0,212,170,0.35);
+  border-radius: 3px;
+}
+.cat-nav::-webkit-scrollbar-thumb:hover { background: rgba(0,212,170,0.55); }
+.cat-scroll-btn {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px;
+  background: #080b0f;
+  color: #5ce0c6;
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+  transition: background .15s, color .15s;
+  user-select: none;
+}
+.cat-scroll-btn:hover { background: rgba(0,212,170,0.12); color: #00d4aa; }
+.cat-scroll-btn:active { background: rgba(0,212,170,0.2); }
+.cat-scroll-btn.left  { border-right: 1px solid rgba(0,212,170,0.1); }
+.cat-scroll-btn.right { border-left:  1px solid rgba(0,212,170,0.1); }
+.cat-scroll-btn[disabled] { opacity: .25; cursor: default; pointer-events: none; }
 .cat-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 10px 14px;
