@@ -4,9 +4,9 @@
 ════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg:        #f2f4f8;
+  --bg:        #f4f4f5;
   --surface:   #ffffff;
-  --surface-2: #f7f8fc;
+  --surface-2: #f8f8f9;
   --border:    rgba(0,0,0,0.08);
   --border-md: rgba(0,0,0,0.14);
 
@@ -15,9 +15,9 @@
   --text-3: #6b7280;
   --text-4: #9ca3af;
 
-  --accent:    #2563eb;
-  --accent-dk: #1d4ed8;
-  --accent-lt: #dbeafe;
+  --accent:    #2e3a46;
+  --accent-dk: #1a2027;
+  --accent-lt: #e0e1e3;
   --green:     #059669;
   --green-lt:  #d1fae5;
 
