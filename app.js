@@ -1,270 +1,428 @@
-/**
- * Prompt Hub 每日複製統計報告
- * ─────────────────────────────────────────────────────────
- * 統計區間：每天上午 7:00 到隔天上午 7:00（24 小時為一期）
- * 寄信時間：隔天上午 7:00 自動寄出
- *
- * 安裝方式：
- * 1. 打開「Prompt Hub 複製紀錄回覆」這份 Google Sheet
- * 2. 上方選單：擴充功能 → Apps Script
- * 3. 把預設的程式碼全部刪除，貼上這整份檔案
- * 4. 點儲存（磁片圖示）
- * 5. 上方函式選單選 setupDailyTrigger，點執行（▶）
- *    → 第一次執行會跳出授權視窗，點允許
- *    → 如果之前已經設定過 9 點的觸發器，這次執行會自動移除舊的、換成 7 點
- * 6. 完成後，每天台北時間上午 7 點會自動寄一封日報到你的 Gmail，
- *    內容統計的是「前一天早上 7 點～今天早上 7 點」這 24 小時的複製紀錄
- *
- * 如果想立即測試效果，執行 sendDailyReport 這個函式即可馬上收到一封信
- * （測試時無論當下是幾點，一律計算「往前推 24 小時、對齊到最近一次上午 7 點」的區間）
- * ─────────────────────────────────────────────────────────
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   app.js  ·  AI 提示詞資料庫（桌機版）
+   按鈕設計：
+     ① 複製提示詞（藍色）  ─ 複製主提示詞全文
+     ② 複製案例（綠色）    ─ 複製案例情境提示詞
+   案例內容存在 window.__caseCache，按鈕只傳 index，完全避開 HTML encode 問題。
+═══════════════════════════════════════════════════════════════════════════ */
 
-// 收件者 email（預設寄給自己，也可以改成別的地址）
-var REPORT_EMAIL = Session.getActiveUser().getEmail();
+/* ── State ─────────────────────────────────────────────────────────────── */
 
-// 統計區間的起始時刻（24 小時制），對應「每天上午 7 點」
-var REPORT_START_HOUR = 7;
+/* ── Google Form 複製記錄 ─────────────────────────────────────────────── */
+var _COPY_LOG_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd0ceJqdNzp3cHFPvOxkiu4wPy76nHqioj9I-0JP8_CNCjbDg/formResponse';
 
-// 欄位對應（依照 Google Sheet 目前的欄位順序）
-var COL = {
-  TIMESTAMP: 0,   // A 時間戳記（表單提交時間，Google 自動加）
-  PROMPT_ID: 1,   // B prompt_id
-  TITLE:     2,   // C prompt_title
-  CATEGORY:  3,   // D category
-  COPIED_AT: 4    // E copied_at（前端送出的 ISO 時間）
-};
+function logCopyToGoogleForm(prompt) {
+  try {
+    var data = new FormData();
+    data.append('entry.748276167',  String(prompt.id    || ''));
+    data.append('entry.324033027',  String(prompt.title  || ''));
+    data.append('entry.2019876852', String(prompt.cat    || ''));
+    data.append('entry.98204614',   new Date().toISOString());
+    fetch(_COPY_LOG_FORM_URL, { method: 'POST', mode: 'no-cors', body: data });
+  } catch (e) {}
+}
 
-/**
- * 主程式：統計「上一個上午7點～這次上午7點」的資料並寄信
- */
-function sendDailyReport() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Form_Responses')
-              || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+let currentCat = 'all';
+let searchQuery = '';
 
-  var data = sheet.getDataRange().getValues();
-  // 第一列是標題列，從第二列開始才是資料
-  var rows = data.slice(1);
+/* ── Case prompt cache ───────────────────────────────────────────────────── */
+window.__caseCache = [];
+let __modalCaseCache = [];
 
-  var tz = Session.getScriptTimeZone();
-  var now = new Date();
+function storeCasePrompt(text) {
+  window.__caseCache.push(text);
+  return window.__caseCache.length - 1;
+}
+function getCasePrompt(idx) {
+  return window.__caseCache[idx] || '';
+}
 
-  // periodEnd：把「現在」對齊到當天的上午 7 點
-  // 觸發器固定在上午 7 點執行，所以 periodEnd 就是今天的 07:00
-  var periodEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), REPORT_START_HOUR, 0, 0, 0);
-  // 若手動測試時剛好在凌晨 0:00～07:00 之間執行，periodEnd 應往前推一天，避免區間算反
-  if (now < periodEnd) {
-    periodEnd.setDate(periodEnd.getDate() - 1);
-  }
-  // periodStart：periodEnd 往前推 24 小時，即前一天的上午 7 點
-  var periodStart = new Date(periodEnd);
-  periodStart.setDate(periodStart.getDate() - 1);
+/* ── Copy-count display (localStorage only) ─────────────────────────────── */
+var _LS_KEY     = 'prompt_copy_counts';
+var _memCounts  = null;
+var _INIT_COUNTS = {"1":18,"3":6,"4":8,"5":7,"6":7,"7":7,"9":9,"10":14,"11":11,"12":14,"13":11,"14":8,"15":8,"16":8,"17":8,"18":9,"19":22,"81":18,"20":9,"21":12,"22":9,"23":12,"24":11,"25":9,"26":12,"27":7,"28":5,"29":7,"30":7,"31":9,"32":8,"33":11,"34":10,"35":10,"36":11,"37":9,"38":8,"39":9,"40":7,"41":7,"43":7,"44":9,"45":7,"46":5,"47":8,"48":9,"49":5,"50":8,"51":5,"52":9,"8":16,"53":11,"54":9,"55":11,"56":8,"57":7,"58":7,"59":8,"60":9,"61":7,"62":10,"63":9,"64":12,"65":11,"66":12,"67":11,"68":6,"69":7,"70":7,"71":6,"72":7,"73":5,"74":22,"75":9,"76":12,"77":9,"78":9,"79":11,"80":11,"82":7,"83":11,"84":7,"85":11,"86":8,"87":9,"88":7,"89":7,"90":12,"91":9,"92":8,"102":9,"103":12,"104":10,"105":9,"106":11,"107":11,"108":11,"109":9};
 
-  // 篩選出「本期（periodStart ～ periodEnd）」的紀錄
-  var periodRows = rows.filter(function(r) {
-    var ts = r[COL.TIMESTAMP];
-    if (!(ts instanceof Date)) return false;
-    return ts >= periodStart && ts < periodEnd;
-  });
+function _lsLoad() {
+  try {
+    var stored = localStorage.getItem(_LS_KEY);
+    if (!stored || stored === '{}') return Object.assign({}, _INIT_COUNTS);
+    var data = JSON.parse(stored);
+    var merged = Object.assign({}, _INIT_COUNTS);
+    Object.keys(data).forEach(function(k) {
+      merged[k] = Math.max(parseInt(merged[k]) || 0, parseInt(data[k]) || 0);
+    });
+    return merged;
+  } catch(e) { return Object.assign({}, _INIT_COUNTS); }
+}
+function _lsSave(c) {
+  try { localStorage.setItem(_LS_KEY, JSON.stringify(c)); } catch(e) {}
+}
 
-  // 累計總筆數（全部歷史資料，不受本期區間限制）
-  var totalCount = rows.filter(function(r) { return r[COL.TIMESTAMP] instanceof Date; }).length;
+function getCount(id) {
+  return (_memCounts || _lsLoad())[id] || 0;
+}
 
-  // 本期新增筆數
-  var periodNewCount = periodRows.length;
-
-  // 依分類統計本期新增次數
-  var catCounts = {};
-  periodRows.forEach(function(r) {
-    var cat = String(r[COL.CATEGORY] || '未分類');
-    catCounts[cat] = (catCounts[cat] || 0) + 1;
-  });
-
-  // 依提示詞統計本期被複製最多次的前 5 名
-  var titleCounts = {};
-  periodRows.forEach(function(r) {
-    var title = String(r[COL.TITLE] || '未命名');
-    titleCounts[title] = (titleCounts[title] || 0) + 1;
-  });
-  var topTitles = Object.keys(titleCounts)
-    .map(function(t) { return { title: t, count: titleCounts[t] }; })
-    .sort(function(a, b) { return b.count - a.count; })
-    .slice(0, 5);
-
-  // 分類圖示對照表（跟網站上的一致）
-  var CAT_ICONS = {
-    'preset':   '⚙️ AI工具設定',
-    'decision': '📊 決策與分析',
-    'proposal': '📋 企劃與提案',
-    'project':  '🗂️ 專案管理',
-    'comms':    '💼 職場溝通',
-    'writing':  '✍️ 文稿優化',
-    'ai_roles': '🧠 策略智囊',
-    'industry': '📈 產業分析',
-    'sales':    '💰 行銷銷售',
-    'research': '🔬 研究分析',
-    'routine':  '📅 日常效率',
-    'learning': '🎓 學習成長',
-    'creative': '🎨 視覺創作',
-    'life':     '✨ 生活娛樂'
-  };
-
-  // 組裝信件內容
-  var periodStartLabel = Utilities.formatDate(periodStart, tz, 'yyyy/MM/dd HH:mm');
-  var periodEndLabel = Utilities.formatDate(periodEnd, tz, 'yyyy/MM/dd HH:mm');
-  var reportDateLabel = Utilities.formatDate(periodEnd, tz, 'yyyy/MM/dd');
-
-  var body = '📊 Prompt Hub 每日使用報告\n';
-  body += '統計區間：' + periodStartLabel + ' ～ ' + periodEndLabel + '\n';
-  body += '─────────────────────────────\n\n';
-  body += '累計複製總數：' + totalCount + '　　本期新增：+' + periodNewCount + '\n\n';
-  body += '─────────────────────────────\n\n';
-
-  body += '【各分類本期新增次數】\n';
-  var catKeys = Object.keys(CAT_ICONS);
-  catKeys.forEach(function(key) {
-    var label = CAT_ICONS[key];
-    var count = catCounts[key] || 0;
-    if (count > 0) {
-      body += label + '　+' + count + '\n';
+function refreshAllCountPills() {
+  if (!_memCounts) return;
+  document.querySelectorAll('.card[data-id]').forEach(function(card) {
+    var id  = parseInt(card.getAttribute('data-id'));
+    var cnt = (_memCounts[id] || 0);
+    var pill = card.querySelector('.card-copies');
+    if (!pill) return;
+    if (cnt > 0) {
+      pill.textContent = '⎘ ' + fmt(cnt);
+      pill.title = '已複製 ' + cnt + ' 次';
+      pill.classList.remove('card-copies-zero');
+    } else {
+      pill.textContent = '⎘ 0';
+      pill.classList.add('card-copies-zero');
     }
   });
-  if (periodNewCount === 0) {
-    body += '（本期無任何複製紀錄）\n';
+}
+
+
+function incrementCount(id) {
+  var c = _memCounts || _lsLoad();
+  c[id] = (c[id] || 0) + 1;
+  _memCounts = c;
+  _lsSave(c);
+  return c[id];
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  _memCounts = _lsLoad();
+  refreshAllCountPills();
+});
+
+function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
+
+/* ── Helpers ────────────────────────────────────────────────────────────── */
+function catInfo(key) {
+  return CATEGORIES[key] || { label: key, icon: '◉', class: '' };
+}
+function previewText(content) {
+  return content.replace(/#+\s/g, '').replace(/[│|]/g, '').replace(/\n+/g, ' ').trim();
+}
+function getCases(pid) {
+  return (typeof CASES_BY_PROMPT !== 'undefined' && CASES_BY_PROMPT[pid])
+    ? CASES_BY_PROMPT[pid] : [];
+}
+function caseTagClass(type) {
+  if (type === 'practice') return 'practice';
+  return '';
+}
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Copy utilities ─────────────────────────────────────────────────────── */
+function doPromptCopy(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied-prompt');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ 已複製！';
+    setTimeout(() => { btn.classList.remove('copied-prompt'); btn.innerHTML = orig; }, 2000);
+  }).catch(err => console.error('複製失敗', err));
+}
+
+function doCaseCopy(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied-case');
+    btn.textContent = '✓ 已複製';
+    setTimeout(() => { btn.classList.remove('copied-case'); btn.textContent = '⎘ 複製案例'; }, 2000);
+  }).catch(err => console.error('複製失敗', err));
+}
+
+/* ── Card rendering ─────────────────────────────────────────────────────── */
+function renderCards() {
+  window.__caseCache = [];
+  const grid = document.getElementById('cardGrid');
+  const q    = searchQuery.toLowerCase();
+
+  const filtered = PROMPTS.filter(p => {
+    const matchCat = currentCat === 'all' || p.cat === currentCat;
+    const matchQ   = !q || p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  document.getElementById('count-all').textContent = PROMPTS.length;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="no-results"><span>◎</span><p>找不到符合「${searchQuery}」的提示詞</p></div>`;
+    return;
   }
 
-  body += '\n─────────────────────────────\n\n';
+  grid.innerHTML = filtered.map((p, i) => {
+    const cat   = catInfo(p.cat);
+    const cnt   = getCount(p.id);
+    const badge = cnt > 0
+      ? `<span class="card-copies" title="已複製 ${cnt} 次">⎘ ${fmt(cnt)}</span>`
+      : `<span class="card-copies card-copies-zero">⎘ 0</span>`;
 
-  if (topTitles.length > 0) {
-    body += '【本期最常被複製的提示詞 TOP 5】\n';
-    topTitles.forEach(function(item, i) {
-      body += (i + 1) + '. ' + item.title + '　（' + item.count + ' 次）\n';
+    const footer = `
+      <div class="card-footer">
+        <span class="card-chars">${p.content.length.toLocaleString()} 字元</span>
+        <div class="card-footer-actions">
+          ${badge}
+          <button class="card-copy-prompt-btn"
+            onclick="cardCopyPromptById(event,this,${p.id})"
+            title="複製提示詞全文">
+            ⎘ 複製提示詞
+          </button>
+        </div>
+      </div>`;
+
+    const cases = getCases(p.id);
+    const casesHTML = cases.length ? (() => {
+      const caseItems = cases.map(c => {
+        const cacheIdx = storeCasePrompt(c.prompt);
+        return `
+            <div class="case-item">
+              <div class="case-item-header">
+                <span class="case-tag ${caseTagClass(c.type)}">${c.typeLabel}</span>
+                <button class="case-copy-btn"
+                  onclick="cardCopyCase(event,this,${cacheIdx})"
+                  title="複製此案例的完整提示詞">
+                  ⎘ 複製案例
+                </button>
+              </div>
+              <div class="case-title">${escapeHtml(c.title)}</div>
+              <div class="case-scene">${escapeHtml(c.scene)}</div>
+            </div>`;
+      }).join('');
+      return `
+      <div class="card-cases">
+        <button class="cases-toggle" onclick="toggleCases(event,this)">
+          <span class="cases-toggle-icon">▶</span>
+          <span class="cases-toggle-label">📋 實戰案例</span>
+          <span class="cases-toggle-count">${cases.length}</span>
+        </button>
+        <div class="cases-list">${caseItems}</div>
+      </div>`;
+    })() : '';
+
+    return `
+      <div class="card ${cat.class}" style="animation-delay:${Math.min(i*.04,.4)}s" data-id="${p.id}">
+        <div class="card-top" onclick="openModal(${p.id})" style="cursor:pointer;">
+          <span class="card-cat">${cat.icon} ${cat.label}</span>
+          <span class="card-arrow">↗</span>
+        </div>
+        <div class="card-title"  onclick="openModal(${p.id})" style="cursor:pointer;">${escapeHtml(p.title)}</div>
+        ${p.desc ? `<div class="card-scene"><span class="card-scene-icon">💡</span><span class="card-scene-text">${escapeHtml(p.desc)}</span></div>` : ''}
+        <div class="card-preview" onclick="openModal(${p.id})" style="cursor:pointer;">${escapeHtml(previewText(p.content))}</div>
+        ${footer}
+        ${casesHTML}
+      </div>`;
+  }).join('');
+}
+
+/* 卡片：複製提示詞（藍）*/
+function cardCopyPromptById(e, btn, id) {
+  e.stopPropagation();
+  const p = PROMPTS.find(x => x.id === id);
+  if (!p) return;
+  navigator.clipboard.writeText(p.content).then(() => {
+    const newCnt = incrementCount(id);
+    logCopyToGoogleForm(p);
+    btn.classList.add('copied-prompt');
+    btn.textContent = '✓ 已複製！';
+    setTimeout(() => { btn.classList.remove('copied-prompt'); btn.textContent = '⎘ 複製提示詞'; }, 2000);
+    const card = document.querySelector(`.card[data-id="${id}"]`);
+    if (card) {
+      const b = card.querySelector('.card-copies');
+      if (b) { b.textContent = `⎘ ${fmt(newCnt)}`; b.title = `已複製 ${newCnt} 次`; b.classList.remove('card-copies-zero'); b.classList.add('card-copies-bump'); setTimeout(() => b.classList.remove('card-copies-bump'), 500); }
+    }
+  }).catch(err => console.error('複製失敗', err));
+}
+
+/* 卡片：複製案例（綠）*/
+function cardCopyCase(e, btn, cacheIdx) {
+  e.stopPropagation();
+  const text = getCasePrompt(cacheIdx);
+  if (!text) return;
+  doCaseCopy(text, btn);
+}
+
+/* 折疊開關 */
+function toggleCases(e, btn) {
+  e.stopPropagation();
+  const list = btn.nextElementSibling;
+  const open = btn.classList.toggle('open');
+  list.classList.toggle('open', open);
+}
+
+/* ── Modal ──────────────────────────────────────────────────────────────── */
+function openModal(id) {
+  __modalCaseCache = [];
+  const p = PROMPTS.find(x => x.id === id);
+  if (!p) return;
+  const cat = catInfo(p.cat);
+
+  const catTag = document.getElementById('modalCat');
+  catTag.textContent = `${cat.icon} ${cat.label}`;
+  catTag.className   = `modal-cat-tag ${cat.class}`;
+  document.getElementById('modalTitle').textContent = p.title;
+  const sceneEl = document.getElementById('modalScene');
+  if (p.desc) {
+    sceneEl.textContent = '💡 ' + p.desc;
+    sceneEl.style.display = 'block';
+  } else {
+    sceneEl.style.display = 'none';
+  }
+  document.getElementById('modalContent').textContent = p.content;
+
+  const cnt = getCount(id);
+  document.getElementById('modalCopyCount').textContent = cnt > 0 ? `已複製 ${cnt} 次` : '';
+
+  const cases       = getCases(id);
+  const casesPanelEl = document.getElementById('modalCases');
+  const casesListEl  = document.getElementById('modalCasesList');
+
+  if (cases.length) {
+    casesPanelEl.style.display = 'block';
+    casesListEl.innerHTML = cases.map(c => {
+      const idx = __modalCaseCache.length;
+      __modalCaseCache.push(c.prompt);
+      const tipsHtml = (c.tips && c.tips.length) ? `
+        <div class="modal-case-section">
+          <div class="modal-case-section-label">💡 進階練習</div>
+          <div class="modal-case-text">${c.tips.map(t => '• ' + escapeHtml(t)).join('\n')}</div>
+        </div>` : '';
+      return `
+        <div class="modal-case-item">
+          <div class="modal-case-header">
+            <span class="case-tag ${caseTagClass(c.type)}">${c.typeLabel}</span>
+            <span class="modal-case-title">${escapeHtml(c.title)}</span>
+            <button class="modal-case-copy"
+              onclick="modalCopyCase(this,${idx})"
+              title="複製此案例的完整提示詞">
+              ⎘ 複製案例
+            </button>
+          </div>
+          <div class="modal-case-section">
+            <div class="modal-case-section-label">📍 適用場景</div>
+            <div class="modal-case-text">${escapeHtml(c.scene)}</div>
+          </div>
+          <div class="modal-case-section">
+            <div class="modal-case-section-label">🔧 使用前準備</div>
+            <div class="modal-case-text">${escapeHtml(c.prep || '')}</div>
+          </div>
+          ${tipsHtml}
+          <div class="modal-case-section">
+            <div class="modal-case-section-label">📋 完整案例提示詞</div>
+            <pre class="modal-case-prompt" data-modal-case-idx="${idx}"></pre>
+          </div>
+        </div>`;
+    }).join('');
+    casesListEl.querySelectorAll('.modal-case-prompt[data-modal-case-idx]').forEach(pre => {
+      const idx = parseInt(pre.dataset.modalCaseIdx);
+      pre.textContent = __modalCaseCache[idx] || '';
     });
   } else {
-    body += '本期沒有任何提示詞被複製。\n';
+    casesPanelEl.style.display = 'none';
+    casesListEl.innerHTML = '';
   }
 
-  body += '\n─────────────────────────────\n';
-  body += '本信由 Prompt Hub 自動發送\n';
-
-  var subject = '📊 Prompt Hub 日報 ' + reportDateLabel + ' 07:00 新增 +' + periodNewCount + ' 次';
-
-  MailApp.sendEmail({
-    to: REPORT_EMAIL,
-    subject: subject,
-    body: body
-  });
+  const overlay = document.getElementById('modalOverlay');
+  overlay.classList.add('open');
+  overlay.dataset.promptId = id;
+  document.body.style.overflow = 'hidden';
+  document.getElementById('copyConfirm').classList.remove('show');
 }
 
-/**
- * 測試專用：不受「上午7點」邊界限制，統計「過去24小時到現在」
- * 平常要驗證資料有沒有正確送進 Sheet，用這個函式即可，跟正式排程互不影響
- */
-function sendTestReportNow() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Form_Responses')
-              || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-
-  var data = sheet.getDataRange().getValues();
-  var rows = data.slice(1);
-
-  var tz = Session.getScriptTimeZone();
-  var periodEnd = new Date();
-  var periodStart = new Date(periodEnd);
-  periodStart.setDate(periodStart.getDate() - 1);
-
-  var periodRows = rows.filter(function(r) {
-    var ts = r[COL.TIMESTAMP];
-    if (!(ts instanceof Date)) return false;
-    return ts >= periodStart && ts < periodEnd;
-  });
-
-  var totalCount = rows.filter(function(r) { return r[COL.TIMESTAMP] instanceof Date; }).length;
-  var periodNewCount = periodRows.length;
-
-  var catCounts = {};
-  periodRows.forEach(function(r) {
-    var cat = String(r[COL.CATEGORY] || '未分類');
-    catCounts[cat] = (catCounts[cat] || 0) + 1;
-  });
-
-  var CAT_ICONS = {
-    'preset':   '⚙️ AI工具設定',
-    'decision': '📊 決策與分析',
-    'proposal': '📋 企劃與提案',
-    'project':  '🗂️ 專案管理',
-    'comms':    '💼 職場溝通',
-    'writing':  '✍️ 文稿優化',
-    'ai_roles': '🧠 策略智囊',
-    'industry': '📈 產業分析',
-    'sales':    '💰 行銷銷售',
-    'research': '🔬 研究分析',
-    'routine':  '📅 日常效率',
-    'learning': '🎓 學習成長',
-    'creative': '🎨 視覺創作',
-    'life':     '✨ 生活娛樂'
-  };
-
-  var periodStartLabel = Utilities.formatDate(periodStart, tz, 'yyyy/MM/dd HH:mm');
-  var periodEndLabel = Utilities.formatDate(periodEnd, tz, 'yyyy/MM/dd HH:mm');
-
-  var body = '🧪 Prompt Hub 測試報告（過去24小時到現在）\n';
-  body += '統計區間：' + periodStartLabel + ' ～ ' + periodEndLabel + '\n';
-  body += '─────────────────────────────\n\n';
-  body += '累計複製總數：' + totalCount + '　　本期新增：+' + periodNewCount + '\n\n';
-
-  body += '【各分類本期新增次數】\n';
-  Object.keys(CAT_ICONS).forEach(function(key) {
-    var count = catCounts[key] || 0;
-    if (count > 0) {
-      body += CAT_ICONS[key] + '　+' + count + '\n';
+/* Modal：複製提示詞（藍）*/
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const id = parseInt(document.getElementById('modalOverlay').dataset.promptId);
+  const p  = PROMPTS.find(x => x.id === id);
+  if (!p) return;
+  navigator.clipboard.writeText(p.content).then(() => {
+    const newCnt = incrementCount(id);
+    logCopyToGoogleForm(p);
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied-prompt');
+    btn.innerHTML = '<span class="copy-icon">✓</span> 已複製！';
+    setTimeout(() => { btn.classList.remove('copied-prompt'); btn.innerHTML = '<span class="copy-icon">⎘</span> 複製提示詞'; }, 2200);
+    const confirm = document.getElementById('copyConfirm');
+    confirm.textContent = `第 ${newCnt} 次複製`;
+    confirm.classList.add('show');
+    setTimeout(() => confirm.classList.remove('show'), 2400);
+    document.getElementById('modalCopyCount').textContent = `已複製 ${newCnt} 次`;
+    const card = document.querySelector(`.card[data-id="${id}"]`);
+    if (card) {
+      const b = card.querySelector('.card-copies');
+      if (b) { b.textContent = `⎘ ${fmt(newCnt)}`; b.title = `已複製 ${newCnt} 次`; b.classList.remove('card-copies-zero'); b.classList.add('card-copies-bump'); setTimeout(() => b.classList.remove('card-copies-bump'), 500); }
+      const cpBtn = card.querySelector('.card-copy-prompt-btn');
+      if (cpBtn) { cpBtn.classList.add('copied-prompt'); cpBtn.textContent = '✓ 已複製！'; setTimeout(() => { cpBtn.classList.remove('copied-prompt'); cpBtn.textContent = '⎘ 複製提示詞'; }, 2200); }
     }
-  });
-  if (periodNewCount === 0) {
-    body += '（過去24小時無任何複製紀錄，代表表單或分頁對應可能有問題，需要進一步檢查）\n';
+  }).catch(err => console.error('複製失敗', err));
+});
+
+/* Modal：複製案例（綠）*/
+function modalCopyCase(btn, idx) {
+  const text = __modalCaseCache[idx];
+  if (!text) return;
+  doCaseCopy(text, btn);
+}
+
+/* ── Close modal ────────────────────────────────────────────────────────── */
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ── Category nav ───────────────────────────────────────────────────────── */
+document.getElementById('catNav').addEventListener('click', e => {
+  const btn = e.target.closest('.cat-btn');
+  if (!btn) return;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = btn.dataset.cat;
+  renderCards();
+});
+
+/* ── 分類列：左右箭頭捲動 + 滑鼠滾輪橫向捲動 + 箭頭自動啟用/禁用 ───────── */
+(function setupCatNavScroll() {
+  const nav      = document.getElementById('catNav');
+  const btnLeft  = document.getElementById('catScrollLeft');
+  const btnRight = document.getElementById('catScrollRight');
+  if (!nav || !btnLeft || !btnRight) return;
+
+  function updateArrows() {
+    const max = nav.scrollWidth - nav.clientWidth;
+    btnLeft.disabled  = nav.scrollLeft <= 2;
+    btnRight.disabled = nav.scrollLeft >= max - 2;
   }
 
-  MailApp.sendEmail({
-    to: REPORT_EMAIL,
-    subject: '🧪 Prompt Hub 測試報告（過去24小時）',
-    body: body
-  });
-}
+  function scrollByAmount(dir) {
+    nav.scrollBy({ left: dir * Math.max(160, nav.clientWidth * 0.6), behavior: 'smooth' });
+  }
 
-/**
- * 設定每日自動觸發器（只需執行一次）
- * 設定為每天上午 7 點（依照試算表時區）自動執行 sendDailyReport，
- * 寄出的內容統計的是「前一天上午7點～今天上午7點」這 24 小時
- */
-function setupDailyTrigger() {
-  // 先移除舊的觸發器，避免重複建立（含之前設定的 9 點版本）
-  var triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(function(t) {
-    if (t.getHandlerFunction() === 'sendDailyReport') {
-      ScriptApp.deleteTrigger(t);
+  btnLeft.addEventListener('click', () => scrollByAmount(-1));
+  btnRight.addEventListener('click', () => scrollByAmount(1));
+
+  // 滑鼠垂直滾輪直接轉成橫向捲動（不需要按 Shift）
+  nav.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      nav.scrollLeft += e.deltaY;
     }
-  });
+  }, { passive: false });
 
-  // 建立新的每日觸發器：每天上午 7 點
-  ScriptApp.newTrigger('sendDailyReport')
-    .timeBased()
-    .everyDays(1)
-    .atHour(REPORT_START_HOUR)
-    .create();
+  nav.addEventListener('scroll', updateArrows);
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
+})();
 
-  Logger.log('每日觸發器已建立，將於每天上午 7 點寄送報告（統計前一天7點～今天7點）');
-}
+/* ── Search ─────────────────────────────────────────────────────────────── */
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value;
+  renderCards();
+});
 
-/**
- * 移除每日觸發器（如果想停用自動寄信）
- */
-function removeDailyTrigger() {
-  var triggers = ScriptApp.getProjectTriggers();
-  var removed = 0;
-  triggers.forEach(function(t) {
-    if (t.getHandlerFunction() === 'sendDailyReport') {
-      ScriptApp.deleteTrigger(t);
-      removed++;
-    }
-  });
-  Logger.log('已移除 ' + removed + ' 個觸發器');
-}
+/* ── Init ───────────────────────────────────────────────────────────────── */
+renderCards();
