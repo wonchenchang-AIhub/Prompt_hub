@@ -157,6 +157,80 @@ function sendDailyReport() {
 }
 
 /**
+ * 測試專用：不受「上午7點」邊界限制，統計「過去24小時到現在」
+ * 平常要驗證資料有沒有正確送進 Sheet，用這個函式即可，跟正式排程互不影響
+ */
+function sendTestReportNow() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Form_Responses')
+              || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+
+  var data = sheet.getDataRange().getValues();
+  var rows = data.slice(1);
+
+  var tz = Session.getScriptTimeZone();
+  var periodEnd = new Date();
+  var periodStart = new Date(periodEnd);
+  periodStart.setDate(periodStart.getDate() - 1);
+
+  var periodRows = rows.filter(function(r) {
+    var ts = r[COL.TIMESTAMP];
+    if (!(ts instanceof Date)) return false;
+    return ts >= periodStart && ts < periodEnd;
+  });
+
+  var totalCount = rows.filter(function(r) { return r[COL.TIMESTAMP] instanceof Date; }).length;
+  var periodNewCount = periodRows.length;
+
+  var catCounts = {};
+  periodRows.forEach(function(r) {
+    var cat = String(r[COL.CATEGORY] || '未分類');
+    catCounts[cat] = (catCounts[cat] || 0) + 1;
+  });
+
+  var CAT_ICONS = {
+    'preset':   '⚙️ AI工具設定',
+    'decision': '📊 決策與分析',
+    'proposal': '📋 企劃與提案',
+    'project':  '🗂️ 專案管理',
+    'comms':    '💼 職場溝通',
+    'writing':  '✍️ 文稿優化',
+    'ai_roles': '🧠 策略智囊',
+    'industry': '📈 產業分析',
+    'sales':    '💰 行銷銷售',
+    'research': '🔬 研究分析',
+    'routine':  '📅 日常效率',
+    'learning': '🎓 學習成長',
+    'creative': '🎨 視覺創作',
+    'life':     '✨ 生活娛樂'
+  };
+
+  var periodStartLabel = Utilities.formatDate(periodStart, tz, 'yyyy/MM/dd HH:mm');
+  var periodEndLabel = Utilities.formatDate(periodEnd, tz, 'yyyy/MM/dd HH:mm');
+
+  var body = '🧪 Prompt Hub 測試報告（過去24小時到現在）\n';
+  body += '統計區間：' + periodStartLabel + ' ～ ' + periodEndLabel + '\n';
+  body += '─────────────────────────────\n\n';
+  body += '累計複製總數：' + totalCount + '　　本期新增：+' + periodNewCount + '\n\n';
+
+  body += '【各分類本期新增次數】\n';
+  Object.keys(CAT_ICONS).forEach(function(key) {
+    var count = catCounts[key] || 0;
+    if (count > 0) {
+      body += CAT_ICONS[key] + '　+' + count + '\n';
+    }
+  });
+  if (periodNewCount === 0) {
+    body += '（過去24小時無任何複製紀錄，代表表單或分頁對應可能有問題，需要進一步檢查）\n';
+  }
+
+  MailApp.sendEmail({
+    to: REPORT_EMAIL,
+    subject: '🧪 Prompt Hub 測試報告（過去24小時）',
+    body: body
+  });
+}
+
+/**
  * 設定每日自動觸發器（只需執行一次）
  * 設定為每天上午 7 點（依照試算表時區）自動執行 sendDailyReport，
  * 寄出的內容統計的是「前一天上午7點～今天上午7點」這 24 小時
