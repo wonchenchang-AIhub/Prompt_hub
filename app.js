@@ -164,6 +164,11 @@ function renderCards() {
         <span class="card-chars">${p.content.length.toLocaleString()} 字元</span>
         <div class="card-footer-actions">
           ${badge}
+          <button class="card-preview-btn"
+            onclick="event.stopPropagation();openModal(${p.id})"
+            title="預覽完整提示詞">
+            👁 預覽
+          </button>
           <button class="card-copy-prompt-btn"
             onclick="cardCopyPromptById(event,this,${p.id})"
             title="複製提示詞全文">

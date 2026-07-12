@@ -275,6 +275,16 @@ pre    { font-family:'JetBrains Mono', monospace; }
   justify-content: space-between; gap: 8px;
 }
 .card-meta { font-size: 11px; color: var(--text-dim); }
+.card-preview-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border-radius: 8px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--accent); cursor: pointer;
+  background: transparent; border: 1px solid var(--border-md);
+  transition: background .15s, transform .1s;
+}
+.card-preview-btn:hover { background: var(--accent-lt); }
+.card-preview-btn:active { transform: scale(.96); }
 .card-copy-prompt-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 12px; border-radius: 8px;
