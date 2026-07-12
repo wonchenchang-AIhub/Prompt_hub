@@ -329,6 +329,7 @@ function openModal(id) {
   }
 
   const overlay = document.getElementById('modalOverlay');
+  document.getElementById('modalScroll').scrollTop = 0;
   overlay.classList.add('open');
   overlay.dataset.promptId = id;
   document.body.style.overflow = 'hidden';

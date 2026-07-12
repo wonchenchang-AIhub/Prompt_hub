@@ -398,7 +398,8 @@ pre    { font-family:'JetBrains Mono', monospace; }
   background: none; border: none; cursor: pointer;
   flex-shrink: 0; line-height: 1; padding: 2px;
 }
-.modal-body { padding: 18px 24px; overflow-y: auto; flex: 1; }
+.modal-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.modal-body { padding: 18px 24px; }
 .modal-scene {
   font-size: 13px; color: #1a8a73;
   background: #effaf7; border: 1px solid #b8ecdf;
