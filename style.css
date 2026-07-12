@@ -324,10 +324,15 @@ pre    { font-family:'JetBrains Mono', monospace; }
   padding: 8px 0; border-top: 1px solid var(--border);
 }
 .case-item:first-child { border-top: none; }
-.case-type-badge {
+.case-item-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 4px; flex-wrap: wrap;
+}
+.case-tag {
   display: inline-block;
   font-size: 10px; font-weight: 700;
   padding: 2px 7px; border-radius: 4px; margin-bottom: 4px;
+  color: var(--accent); background: var(--accent-lt);
 }
 .case-title {
   font-size: 12.5px; font-weight: 700;
@@ -341,16 +346,8 @@ pre    { font-family:'JetBrains Mono', monospace; }
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 600;
   padding: 3px 9px; border-radius: 6px;
-  color: var(--accent); border: 1px solid rgba(37,99,235,.25);
-  background: var(--accent-light); cursor: pointer;
-}
-
-/* ── Modal ───────────────────────────────────────────────────────────────── */
-.modal {
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0,0,0,.5);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+  color: var(--accent); border: 1px solid var(--border-md);
+  background: var(--accent-lt); cursor: pointer;
 }
 
 /* ── Modal Overlay ───────────────────────────────────────────────────────── */
@@ -363,14 +360,6 @@ pre    { font-family:'JetBrains Mono', monospace; }
 }
 .modal-overlay.open { display: flex; }
 .modal {
-  background: var(--surface);
-  border-radius: 14px; width: 100%;
-  max-width: 700px; max-height: 88vh;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-box {
   background: var(--surface);
   border-radius: 14px; width: 100%;
   max-width: 700px; max-height: 88vh;
@@ -406,14 +395,15 @@ pre    { font-family:'JetBrains Mono', monospace; }
   border-radius: 8px; padding: 10px 14px;
   margin-bottom: 14px; line-height: 1.6;
 }
-.prompt-text {
+.modal-content {
   font-family: var(--font-mono);
   font-size: 12.5px; line-height: 1.75;
   color: var(--text); white-space: pre-wrap;
-  word-break: break-word;
+  word-break: break-word; overflow-wrap: break-word;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 8px; padding: 14px 16px;
+  display: block; max-width: 100%;
 }
 .modal-footer {
   padding: 12px 24px 16px;
@@ -449,16 +439,45 @@ pre    { font-family:'JetBrains Mono', monospace; }
   font-size: 13px; font-weight: 700;
   color: var(--text); margin-bottom: 4px;
 }
-.modal-case-scene {
-  font-size: 12px; color: var(--text-dim);
-  line-height: 1.55; margin-bottom: 6px;
+.modal-cases-title {
+  font-size: 12.5px; font-weight: 700;
+  color: var(--text-dim); margin-bottom: 8px;
+}
+.modal-case-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.modal-case-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); flex: 1; min-width: 0;
+}
+.modal-case-section { margin-bottom: 10px; }
+.modal-case-section-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-dim); margin-bottom: 3px;
+}
+.modal-case-text {
+  font-size: 12.5px; color: var(--text);
+  line-height: 1.6; white-space: pre-wrap;
+  word-break: break-word; overflow-wrap: break-word;
+}
+.modal-case-prompt {
+  font-family: var(--font-mono);
+  font-size: 12px; line-height: 1.7;
+  color: var(--text); white-space: pre-wrap;
+  word-break: break-word; overflow-wrap: break-word;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px;
+  display: block; max-width: 100%;
 }
 .modal-case-copy {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 600;
   padding: 3px 9px; border-radius: 6px;
-  color: var(--accent); border: 1px solid rgba(37,99,235,.25);
-  background: var(--accent-light); cursor: pointer;
+  color: var(--accent); border: 1px solid var(--border-md);
+  background: var(--accent-lt); cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* ── Category colour tokens ──────────────────────────────────────────────── */
