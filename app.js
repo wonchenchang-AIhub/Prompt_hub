@@ -18,7 +18,6 @@ function logCopyToGoogleForm(prompt) {
     data.append('entry.324033027',  String(prompt.title  || ''));
     data.append('entry.2019876852', String(prompt.cat    || ''));
     data.append('entry.98204614',   new Date().toISOString());
-    data.append('entry.496213319',  'Prompt_hub');
     fetch(_COPY_LOG_FORM_URL, { method: 'POST', mode: 'no-cors', body: data });
   } catch (e) {}
 }
