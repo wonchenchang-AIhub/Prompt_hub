@@ -1,140 +1,248 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Prompt Hub · 桌機版</title>
+<title>Prompt Hub 已搬遷 · AI Hub Works</title>
+<meta name="description" content="Prompt Hub 已升級搬遷至 AI Hub Works，請前往新網站。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:        #0b201e;
+    --ink-2:      #123734;
+    --paper:      #f4efe4;
+    --gold:       #c9a24b;
+    --gold-soft:  #e4cd8f;
+    --teal-line:  rgba(228,205,143,0.16);
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    font-family:'Noto Sans TC', sans-serif;
+    background:
+      radial-gradient(1100px 700px at 15% -10%, #163e3a 0%, transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, #0f2e2b 0%, transparent 55%),
+      linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 55%, #0d2e2b 100%);
+    color: var(--paper);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* subtle grain */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* faint concentric rings, echoes a compass / "moved location" motif */
+  .rings{
+    position:fixed; top:50%; left:50%;
+    width:1400px; height:1400px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:
+      repeating-radial-gradient(circle,
+        transparent 0, transparent 78px,
+        var(--teal-line) 79px, var(--teal-line) 80px);
+    opacity:.6;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .stage{
+    position:relative; z-index:1;
+    max-width:640px;
+    width:100%;
+    text-align:center;
+  }
+
+  .kicker{
+    display:inline-flex; align-items:center; gap:10px;
+    font-size:11.5px; letter-spacing:.28em; font-weight:500;
+    text-transform:uppercase;
+    color: var(--gold-soft);
+    opacity:0;
+    animation: rise .8s .05s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .kicker::before, .kicker::after{
+    content:""; width:26px; height:1px; background: var(--gold-soft); opacity:.55;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-optical-sizing:auto;
+    font-size: clamp(38px, 6.5vw, 64px);
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    margin:22px 0 6px;
+    opacity:0;
+    animation: rise .9s .18s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  h1 em{
+    font-style:italic;
+    font-weight:300;
+    color: var(--gold-soft);
+  }
+
+  .sub{
+    font-size:15.5px;
+    line-height:1.8;
+    color: rgba(244,239,228,0.72);
+    max-width:480px;
+    margin:0 auto;
+    opacity:0;
+    animation: rise .9s .32s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .sub b{ color: var(--paper); font-weight:500; }
+
+  .divider{
+    width:56px; height:1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin:34px auto;
+    opacity:0;
+    animation: rise .8s .44s cubic-bezier(.16,1,.3,1) forwards;
+  }
+
+  .features{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:10px 12px;
+    margin-bottom:38px;
+    opacity:0;
+    animation: rise .9s .5s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .features span{
+    font-size:12.5px;
+    padding:7px 14px;
+    border:1px solid var(--teal-line);
+    border-radius:100px;
+    color: rgba(244,239,228,0.82);
+    background: rgba(228,205,143,0.04);
+    letter-spacing:.02em;
+    white-space:nowrap;
+  }
+
+  .cta{
+    opacity:0;
+    animation: rise .9s .62s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .btn{
+    position:relative;
+    display:inline-flex; align-items:center; gap:12px;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:16px; font-weight:700;
+    letter-spacing:.02em;
+    color: var(--ink);
+    background: linear-gradient(180deg, #e9d59e, var(--gold));
+    padding:17px 34px;
+    border-radius:100px;
+    text-decoration:none;
+    box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 14px 34px -12px rgba(201,162,75,0.55);
+    transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s;
+  }
+  .btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 20px 40px -12px rgba(201,162,75,0.7);
+  }
+  .btn:active{ transform: translateY(0); }
+  .btn svg{ transition: transform .35s cubic-bezier(.16,1,.3,1); }
+  .btn:hover svg{ transform: translateX(4px); }
+
+  .url-line{
+    margin-top:16px;
+    font-size:12.5px;
+    color: rgba(244,239,228,0.42);
+    letter-spacing:.02em;
+    opacity:0;
+    animation: rise .9s .72s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .url-line code{
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color: rgba(228,205,143,0.75);
+  }
+
+  .redirect-note{
+    margin-top:46px;
+    font-size:11.5px;
+    color: rgba(244,239,228,0.34);
+    letter-spacing:.03em;
+    opacity:0;
+    animation: rise .9s .84s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .redirect-note b{ color: rgba(228,205,143,0.7); font-weight:500; }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  @media (max-width:480px){
+    .features{ gap:8px; }
+    .features span{ font-size:11.5px; padding:6px 12px; }
+    .btn{ padding:15px 26px; font-size:15px; }
+  }
+</style>
 </head>
 <body>
 
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
+  <div class="rings" aria-hidden="true"></div>
 
-<header class="site-header">
-  <div class="hero-block">
-    <p class="hero-eyebrow">PROMPT HUB · 張萬權 &nbsp;|&nbsp; wonchen.chang@gmail.com</p>
-    <div class="hero-body">
-      <div class="hero-left">
-        <h1 class="hero-title">AI 提示詞分享與應用學習平台</h1>
-        <p class="hero-tagline">AI 提示詞<span class="hero-accent">模組庫</span></p>
-      </div>
-      <div class="hero-right">
-        <p class="hero-quote-above">「AI 給你什麼，取決於你怎麼問它。」&mdash; Nathan Hunter</p>
-        <div class="search-wrap">
-          <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋提示詞名稱、說明或內容…">
-        </div>
-      </div>
+  <main class="stage">
+    <span class="kicker">Prompt&nbsp;Hub&nbsp;·&nbsp;公告</span>
+
+    <h1>我們搬新家了，<br><em>來看看新版本</em></h1>
+
+    <p class="sub">
+      這裡是 <b>Prompt Hub</b> 舊版網站。內容已經全面升級，搬遷到全新的
+      <b>AI Hub Works</b>，涵蓋教學簡報、提示詞探索、工具選讀與實作筆記，
+      四大區塊助你把 AI 用進真實工作。
+    </p>
+
+    <div class="divider"></div>
+
+    <div class="features">
+      <span>📊 AI 教學簡報</span>
+      <span>🔍 提示詞探索區</span>
+      <span>🧰 AI 工具選讀</span>
+      <span>📝 AI 實作筆記</span>
     </div>
-  </div>
-  </header>
 
-<div class="cat-nav-wrap">
-  <button class="cat-scroll-btn left" id="catScrollLeft" aria-label="向左捲動" disabled>‹</button>
-  <nav class="cat-nav" id="catNav">
-  <button class="cat-btn active" data-cat="all">
-    <span class="cat-icon">◉</span> 全部
-    <span class="cat-count" id="count-all">147</span>
-  </button>
-  <button class="cat-btn" data-cat="preset">
-    <span class="cat-icon">⚙️</span> AI工具設定
-    <span class="cat-count">2</span>
-  </button>
-  <button class="cat-btn" data-cat="decision">
-    <span class="cat-icon">📊</span> 決策與分析
-    <span class="cat-count">10</span>
-  </button>
-  <button class="cat-btn" data-cat="proposal">
-    <span class="cat-icon">📋</span> 企劃與提案
-    <span class="cat-count">15</span>
-  </button>
-  <button class="cat-btn" data-cat="project">
-    <span class="cat-icon">🗂️</span> 計畫書與報告
-    <span class="cat-count">19</span>
-  </button>
-  <button class="cat-btn" data-cat="creative">
-    <span class="cat-icon">🎨</span> 簡報與視覺
-    <span class="cat-count">14</span>
-  </button>
-  <button class="cat-btn" data-cat="patent">
-    <span class="cat-icon">⚖️</span> 專利分析
-    <span class="cat-count">5</span>
-  </button>
-  <button class="cat-btn" data-cat="writing">
-    <span class="cat-icon">✍️</span> 文稿優化
-    <span class="cat-count">8</span>
-  </button>
-  <button class="cat-btn" data-cat="ai_roles">
-    <span class="cat-icon">🧠</span> 策略智囊
-    <span class="cat-count">12</span>
-  </button>
-  <button class="cat-btn" data-cat="comms">
-    <span class="cat-icon">💼</span> 職場溝通
-    <span class="cat-count">5</span>
-  </button>
-  <button class="cat-btn" data-cat="industry">
-    <span class="cat-icon">📈</span> 產業分析
-    <span class="cat-count">11</span>
-  </button>
-  <button class="cat-btn" data-cat="research">
-    <span class="cat-icon">🔬</span> 研究分析
-    <span class="cat-count">21</span>
-  </button>
-  <button class="cat-btn" data-cat="sales">
-    <span class="cat-icon">💰</span> 行銷銷售
-    <span class="cat-count">9</span>
-  </button>
-  <button class="cat-btn" data-cat="routine">
-    <span class="cat-icon">📅</span> 日常效率
-    <span class="cat-count">7</span>
-  </button>
-  <button class="cat-btn" data-cat="learning">
-    <span class="cat-icon">🎓</span> 學習成長
-    <span class="cat-count">11</span>
-  </button>
-  <button class="cat-btn" data-cat="life">
-    <span class="cat-icon">✨</span> 生活娛樂
-    <span class="cat-count">5</span>
-  </button>
-</nav>
-  <button class="cat-scroll-btn right" id="catScrollRight" aria-label="向右捲動">›</button>
-</div>
-
-<main class="main-grid" id="cardGrid"></main>
-
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal" id="modal">
-    <div class="modal-header">
-      <div class="modal-meta">
-        <span class="modal-cat-tag" id="modalCat"></span>
-        <h2 class="modal-title" id="modalTitle"></h2>
-      </div>
-      <button class="modal-close" id="modalClose">✕</button>
+    <div class="cta">
+      <a class="btn" href="https://wonchenchang-aihub.github.io/AIHub-works/index.html">
+        前往 AI Hub Works
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
+        </svg>
+      </a>
     </div>
-    <div class="modal-scroll" id="modalScroll">
-      <div class="modal-body">
-        <div class="modal-scene" id="modalScene" style="display:none;"></div>
-        <pre class="modal-content" id="modalContent"></pre>
-      </div>
-      <div class="modal-cases" id="modalCases" style="display:none;">
-        <div class="modal-cases-title">📋 實戰案例 · 點擊複製可直接使用</div>
-        <div id="modalCasesList"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="copy-btn" id="copyBtn">
-        <span class="copy-icon">⎘</span> 複製提示詞
-      </button>
-      <span class="copy-confirm" id="copyConfirm"></span>
-      <span class="modal-copy-count" id="modalCopyCount"></span>
-    </div>
-  </div>
-</div>
 
-<script src="data.js"></script>
-<script src="cases.js"></script>
-<script src="app.js"></script>
+    <p class="url-line">原本的提示詞內容，現在收錄在新網站的「<b style="color:var(--gold-soft)">提示詞探索區</b>」</p>
+    <p class="url-line">新網址：<code>wonchenchang-aihub.github.io/AIHub-works</code></p>
+
+    <p class="redirect-note"><b id="count">8</b> 秒後自動為您跳轉，或直接點擊上方按鈕</p>
+  </main>
+
+  <script>
+    var seconds = 8;
+    var el = document.getElementById('count');
+    var timer = setInterval(function () {
+      seconds -= 1;
+      if (el) el.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(timer);
+        window.location.href = "https://wonchenchang-aihub.github.io/AIHub-works/index.html";
+      }
+    }, 1000);
+  </script>
+
 </body>
 </html>
